@@ -1,0 +1,314 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg: #0B0F19;
+  --panel: #0F1628;
+  --panel-2: #111827;
+  --border: rgba(0, 212, 255, 0.15);
+  --neon-blue: #00D4FF;
+  --neon-red: #FF2244;
+  --neon-green: #00FF88;
+  --neon-purple: #8B5CF6;
+  --neon-orange: #FF8C00;
+  --neon-cyan: #00FFCC;
+  --text: #E2E8F0;
+  --text-secondary: #94A3B8;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html, body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Inter', sans-serif;
+  overflow: hidden;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: #0B0F19; }
+::-webkit-scrollbar-thumb { background: var(--neon-blue); border-radius: 2px; }
+
+/* Glass panel */
+.glass-panel {
+  background: rgba(15, 22, 40, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(0, 212, 255, 0.15);
+  border-radius: 8px;
+  box-shadow: 0 4px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(0, 212, 255, 0.08);
+}
+
+.glass-panel:hover {
+  border-color: rgba(0, 212, 255, 0.35);
+  box-shadow: 0 4px 30px rgba(0,0,0,0.5), 0 0 20px rgba(0, 212, 255, 0.08), inset 0 1px 0 rgba(0, 212, 255, 0.15);
+  transition: all 0.3s ease;
+}
+
+/* Red alert variant */
+.glass-panel-red {
+  background: rgba(20, 10, 15, 0.8);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 34, 68, 0.25);
+  border-radius: 8px;
+  box-shadow: 0 4px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255, 34, 68, 0.08);
+}
+
+/* Dashboard grid */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: 280px 1fr 280px;
+  grid-template-rows: auto 1fr auto;
+  gap: 6px;
+  height: calc(100vh - 64px);
+  padding: 6px;
+}
+
+/* Animations */
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0; }
+}
+
+@keyframes pulse-ring {
+  0% { transform: scale(0.8); opacity: 1; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+@keyframes scroll-news {
+  0% { transform: translateY(0); }
+  100% { transform: translateY(-50%); }
+}
+
+@keyframes ticker-scroll {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+
+@keyframes draw-line {
+  0% { stroke-dashoffset: 1000; }
+  100% { stroke-dashoffset: 0; }
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 5px var(--neon-blue), 0 0 10px rgba(0,212,255,0.3); }
+  50% { box-shadow: 0 0 15px var(--neon-blue), 0 0 30px rgba(0,212,255,0.5), 0 0 45px rgba(0,212,255,0.2); }
+}
+
+@keyframes data-stream {
+  0% { opacity: 0; transform: translateY(-5px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes counter-up {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+@keyframes rotate-ring {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes scanline {
+  0% { top: -100%; }
+  100% { top: 100%; }
+}
+
+.animate-blink { animation: blink 1s step-start infinite; }
+.animate-scroll-news { animation: scroll-news 35s linear infinite; }
+.animate-ticker { animation: ticker-scroll 40s linear infinite; }
+.animate-glow-pulse { animation: glow-pulse 2s ease-in-out infinite; }
+.animate-float { animation: float 5s ease-in-out infinite; }
+.animate-data-stream { animation: data-stream 0.5s ease-out; }
+
+/* Live dot */
+.live-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--neon-red);
+  animation: blink 1s step-start infinite;
+}
+
+/* Neon text */
+.neon-text-blue { color: var(--neon-blue); text-shadow: 0 0 10px rgba(0,212,255,0.7); }
+.neon-text-red { color: var(--neon-red); text-shadow: 0 0 10px rgba(255,34,68,0.7); }
+.neon-text-green { color: var(--neon-green); text-shadow: 0 0 10px rgba(0,255,136,0.7); }
+.neon-text-purple { color: var(--neon-purple); text-shadow: 0 0 10px rgba(139,92,246,0.7); }
+.neon-text-orange { color: var(--neon-orange); text-shadow: 0 0 10px rgba(255,140,0,0.7); }
+.neon-text-cyan { color: var(--neon-cyan); text-shadow: 0 0 10px rgba(0,255,204,0.7); }
+
+/* Section header */
+.section-header {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: 3px;
+  text-transform: uppercase;
+  color: var(--neon-blue);
+  border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* Tension bar */
+.tension-bar {
+  height: 4px;
+  border-radius: 2px;
+  background: linear-gradient(90deg, #00FF88 0%, #FFD700 40%, #FF8C00 70%, #FF2244 100%);
+  position: relative;
+}
+
+/* Pulse marker for map */
+.pulse-marker {
+  position: relative;
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+}
+.pulse-marker::before {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%; height: 100%;
+  border-radius: 50%;
+  animation: pulse-ring 1.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
+}
+
+/* Chart styles */
+.chart-container {
+  position: relative;
+  width: 100%;
+}
+
+/* Scrolling news feed */
+.news-feed-wrapper {
+  overflow: hidden;
+  flex: 1;
+  position: relative;
+  mask-image: linear-gradient(to bottom, transparent 0%, black 10%, black 90%, transparent 100%);
+}
+
+/* Status badge */
+.status-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 20px;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.status-critical { background: rgba(255,34,68,0.15); border: 1px solid rgba(255,34,68,0.4); color: #FF2244; }
+.status-warning { background: rgba(255,140,0,0.15); border: 1px solid rgba(255,140,0,0.4); color: #FF8C00; }
+.status-stable { background: rgba(0,255,136,0.15); border: 1px solid rgba(0,255,136,0.4); color: #00FF88; }
+.status-monitor { background: rgba(0,212,255,0.15); border: 1px solid rgba(0,212,255,0.4); color: #00D4FF; }
+
+/* Progress bar */
+.progress-bar {
+  height: 3px;
+  border-radius: 2px;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  border-radius: 2px;
+  transition: width 1s ease;
+  position: relative;
+}
+
+.progress-fill::after {
+  content: '';
+  position: absolute;
+  top: 0; right: 0; bottom: 0;
+  width: 20px;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5));
+}
+
+/* Grid lines background texture */
+.grid-bg {
+  background-image: 
+    linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+/* Scan effect */
+.scan-effect {
+  position: relative;
+  overflow: hidden;
+}
+.scan-effect::after {
+  content: '';
+  position: absolute;
+  left: 0; right: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, rgba(0,212,255,0.5), transparent);
+  animation: scanline 3s linear infinite;
+}
+
+/* Donut center text */
+.donut-center {
+  position: absolute;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+}
+
+/* Top analytics panels grid */
+.top-analytics {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+/* Bottom panels grid */
+.bottom-analytics {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+}
+
+/* Map SVG styles */
+.world-map-svg path {
+  fill: #0D2240;
+  stroke: rgba(0, 212, 255, 0.2);
+  stroke-width: 0.3;
+  transition: fill 0.3s ease;
+}
+.world-map-svg path:hover {
+  fill: rgba(0,212,255,0.2);
+}
+.world-map-svg .conflict-zone { fill: rgba(255,34,68,0.35) !important; }
+.world-map-svg .alliance-zone { fill: rgba(0,212,255,0.2) !important; }
+.world-map-svg .stable-zone { fill: rgba(0,255,136,0.1) !important; }
+
+/* Scrollbar thin */
+.thin-scroll::-webkit-scrollbar { width: 3px; }
+.thin-scroll::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.3); border-radius: 2px; }
+
+/* Number counter animation */
+.counter-animate {
+  animation: counter-up 0.8s ease-out;
+}
