@@ -39,6 +39,7 @@ interface MapCenterProps {
 
 export default function MapCenter({ isMaximized = false, onToggleMaximize }: MapCenterProps) {
   const mapRef = useRef<any>(null);
+  const [isInteracting, setIsInteracting] = useState(false);
   
   // Base layers
   const tileLayerRef = useRef<any>(null);
@@ -512,8 +513,16 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
       </div>
 
       {/* Map container */}
-      <div className="flex-1 relative overflow-hidden">
-        <div id="nexusintel-map" style={{ width: "100%", height: "100%", background: "#050C1A" }} />
+      <div className="flex-1 relative overflow-hidden" onClick={() => setIsInteracting(true)} onMouseLeave={() => setIsInteracting(false)}>
+        <div id="nexusintel-map" style={{ width: "100%", height: "100%", background: "#050C1A", pointerEvents: isInteracting ? 'auto' : 'none' }} />
+        
+        {!isInteracting && (
+          <div className="absolute inset-0 z-[100] cursor-pointer flex items-center justify-center bg-black/20 group">
+            <div className="px-4 py-2 bg-neon-blue/20 border border-neon-blue/40 rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity">
+               <span className="text-neon-blue text-[10px] font-orbitron uppercase tracking-widest font-bold">Click to Activate Map</span>
+            </div>
+          </div>
+        )}
         
         {/* Legend */}
         <div className="absolute bottom-4 left-2 z-20 glass-panel p-2 text-[8px] space-y-1 pointer-events-none">
