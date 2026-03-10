@@ -5,8 +5,8 @@ The system uses AI processing, ontology modeling, and a knowledge graph to trans
 
 🔗 Demo / Access
 
-Demo Video: 
-Live URL:
+Demo Video: https://youtu.be/TARbUnsKo54?si=jZUhe9m8PoG-fFdf
+
 
 🚀 What the System Does:-
 
