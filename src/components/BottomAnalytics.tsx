@@ -133,12 +133,12 @@ export default function BottomAnalytics() {
   return (
     <div className="bottom-analytics h-full">
       {/* Geopolitical Risk Assessment */}
-      <div className="glass-panel p-2.5 flex flex-col">
+      <div className="glass-panel p-2 flex flex-col">
         <div className="section-header">
           <span style={{ color: "#FF2244" }}>◉</span> Geopolitical Risk Assessment
         </div>
         <div className="flex gap-3 flex-1">
-          <div style={{ width: "90px", height: "90px", flexShrink: 0 }}>
+          <div style={{ width: "70px", height: "70px", flexShrink: 0 }}>
             <DonutChart segments={riskSegments} />
           </div>
           <div className="flex flex-col justify-center gap-1.5 flex-1">
@@ -154,7 +154,7 @@ export default function BottomAnalytics() {
       </div>
 
       {/* Military Deployments */}
-      <div className="glass-panel p-2.5 flex flex-col">
+      <div className="glass-panel p-2 flex flex-col">
         <div className="section-header">
           <span style={{ color: "#FF8C00" }}>⚔</span> Military Deployments (Ongoing Ops)
         </div>
@@ -178,7 +178,7 @@ export default function BottomAnalytics() {
       </div>
 
       {/* Global Resource Impacts */}
-      <div className="glass-panel p-2.5 flex flex-col">
+      <div className="glass-panel p-2 flex flex-col">
         <div className="section-header">
           <span style={{ color: "#00FFCC" }}>📊</span> Global Resource Impacts
         </div>
@@ -188,7 +188,7 @@ export default function BottomAnalytics() {
               <span className="text-[7px] text-text-secondary">Energy Prices</span>
               <span className="text-[8px] font-bold" style={{ color: "#FF8C00" }}>+14.2%</span>
             </div>
-            <div className="flex-1 min-h-0" style={{ height: "55px" }}>
+            <div className="flex-1 min-h-0" style={{ height: "45px" }}>
               <MiniLineChart data={energyData} color="#FF8C00" />
             </div>
           </div>
@@ -198,7 +198,7 @@ export default function BottomAnalytics() {
               <span className="text-[7px] text-text-secondary">Trade Routes</span>
               <span className="text-[8px] font-bold" style={{ color: "#00FFCC" }}>Suez: CRITICAL</span>
             </div>
-            <div className="flex-1 min-h-0" style={{ height: "55px" }}>
+            <div className="flex-1 min-h-0" style={{ height: "45px" }}>
               <MiniLineChart data={tradeData} color="#00FFCC" />
             </div>
           </div>
