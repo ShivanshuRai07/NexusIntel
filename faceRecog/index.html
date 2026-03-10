@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Face Recognition - Royal Green</title>
+    <link rel="stylesheet" href="style.css">
+    <script defer src="https://cdn.jsdelivr.net/npm/@vladmandic/face-api@1/dist/face-api.js"></script>
+    <script defer src="script.js"></script>
+    <style>
+        /* Fallback for initial load */
+        body {
+            background-color: #121212;
+            color: #50c878;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Face Recognition System</h1>
+            <p>Royal Security Interface</p>
+        </header>
+
+        <main>
+            <div class="video-container">
+                <video id="video" width="720" height="560" autoplay muted></video>
+                <canvas id="overlay"></canvas>
+            </div>
+
+            <div class="controls">
+                <div class="input-group">
+                    <input type="text" id="nameInput" placeholder="Enter Name">
+                    <button id="registerBtn">Register Face</button>
+                    <button id="recognizeBtn">Start Recognition</button>
+                </div>
+                <div id="status" class="status-message">System Ready</div>
+            </div>
+        </main>
+    </div>
+</body>
+
+</html>
