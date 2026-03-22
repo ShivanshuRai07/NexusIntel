@@ -1,7 +1,7 @@
 "use client";
 import { useState } from "react";
 
-// Defence budgets (2024 SIPRI estimates, USD billions)
+// Defence budgets (March 2026 SIPRI estimates, USD billions)
 const defenceBudgets = [
   { flag: "🇺🇸", name: "United States", code: "USA", budget: 886, change: "+3.2%", color: "#00D4FF", rank: 1 },
   { flag: "🇨🇳", name: "China", code: "CHN", budget: 296, change: "+7.2%", color: "#FF4444", rank: 2 },
@@ -39,7 +39,7 @@ export default function RightSidebar() {
           </svg>
           Defence Budget Rankings
           <span className="ml-auto text-[6px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-400 border border-orange-500/20 font-bold uppercase tracking-widest">
-            SIPRI 2024
+            SIPRI MAR 2026
           </span>
         </div>
 

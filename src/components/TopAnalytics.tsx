@@ -168,7 +168,7 @@ export default function TopAnalytics() {
 
       {/* Precious Metals (Gold) */}
       <div
-        className="glass-panel p-2.5 flex flex-col flex-1 min-w-[230px] cursor-pointer hover:bg-white/5 transition-colors group"
+        className="glass-panel p-2 flex flex-col flex-1 min-w-[230px] cursor-pointer hover:bg-white/5 transition-colors group"
         onClick={() => window.location.href = '/metals-intelligence'}
       >
         <div className="section-header flex justify-between items-center group">
@@ -189,7 +189,7 @@ export default function TopAnalytics() {
             <span className="text-[7px] px-1.5 py-0.5 rounded" style={{ background: "rgba(255,215,0,0.15)", color: "#FFD700" }}>+2.4% MoM</span>
           </div>
         </div>
-        <div className="flex-1 min-h-0" style={{ height: "70px" }}>
+        <div className="flex-1 min-h-0" style={{ height: "45px" }}>
           <LineChart data={goldHistory} color="#FFD700" />
         </div>
         <div className="flex justify-between mt-1 px-0.5">
@@ -204,7 +204,7 @@ export default function TopAnalytics() {
 
       {/* Crude Oil Price */}
       <div
-        className="glass-panel p-2.5 flex flex-col flex-1 min-w-[230px] cursor-pointer hover:bg-white/5 transition-colors group"
+        className="glass-panel p-2 flex flex-col flex-1 min-w-[230px] cursor-pointer hover:bg-white/5 transition-colors group"
         onClick={() => window.location.href = '/economic-intelligence'}
       >
         <div className="section-header flex justify-between items-center group">
@@ -225,7 +225,7 @@ export default function TopAnalytics() {
             <span className="text-[7px] px-1.5 py-0.5 rounded" style={{ background: "rgba(255,140,0,0.15)", color: "#FF8C00" }}>+1.2% MoM</span>
           </div>
         </div>
-        <div className="flex-1 min-h-0" style={{ height: "70px" }}>
+        <div className="flex-1 min-h-0" style={{ height: "45px" }}>
           <LineChart data={oilData} color="#FF8C00" />
         </div>
         <div className="flex justify-between mt-1 items-center">
@@ -240,7 +240,7 @@ export default function TopAnalytics() {
 
       {/* Live Precipitation */}
       <div
-        className="glass-panel p-2.5 flex flex-col flex-1 min-w-[230px] cursor-pointer hover:bg-white/5 transition-colors group"
+        className="glass-panel p-2 flex flex-col flex-1 min-w-[230px] cursor-pointer hover:bg-white/5 transition-colors group"
         onClick={() => window.location.href = '/?mapMode=Live+Precip'}
       >
         <div className="section-header flex justify-between items-center group">
@@ -261,7 +261,7 @@ export default function TopAnalytics() {
             🌧️ Precip Layer
           </span>
         </div>
-        <div className="flex-1 min-h-0" style={{ height: "70px" }}>
+        <div className="flex-1 min-h-0" style={{ height: "45px" }}>
           <BarChart
             data={precipHistory}
             color={(v) => v > 6 ? "#FF4444" : v > 3 ? "#FF8C00" : "#00BFFF"}
@@ -277,7 +277,7 @@ export default function TopAnalytics() {
 
       {/* Live Temp */}
       <div
-        className="glass-panel p-2.5 flex flex-col flex-1 min-w-[230px] cursor-pointer hover:bg-white/5 transition-colors group"
+        className="glass-panel p-2 flex flex-col flex-1 min-w-[230px] cursor-pointer hover:bg-white/5 transition-colors group"
         onClick={() => window.location.href = '/?mapMode=Sea+Temp'}
       >
         <div className="section-header flex justify-between items-center group">
@@ -298,7 +298,7 @@ export default function TopAnalytics() {
             🌡️ Sea Temp Layer
           </span>
         </div>
-        <div className="flex-1 min-h-0" style={{ height: "70px" }}>
+        <div className="flex-1 min-h-0" style={{ height: "45px" }}>
           <LineChart data={tempHistory} color="#FF6B35" />
         </div>
         <div className="flex justify-between mt-1 items-center">
