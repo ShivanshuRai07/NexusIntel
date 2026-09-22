@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import uvicorn
-from routers import ships, news_conflict, economy
+from routers import ships, news_conflict, economy, defense
 
 app = FastAPI(title="NexusIntel Global Intelligence API", version="1.0.0")
 
@@ -16,6 +16,7 @@ app.add_middleware(
 app.include_router(ships.router)
 app.include_router(news_conflict.router)
 app.include_router(economy.router)
+app.include_router(defense.router)
 
 @app.get("/")
 def read_root():

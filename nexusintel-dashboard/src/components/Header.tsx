@@ -5,7 +5,6 @@ export default function Header() {
   const [time, setTime] = useState("");
   const [date, setDate] = useState("");
   const [tensionIndex] = useState(8.4);
-  const [glitching, setGlitching] = useState(false);
 
   useEffect(() => {
     const updateClock = () => {
@@ -15,107 +14,77 @@ export default function Header() {
     };
     updateClock();
     const t = setInterval(updateClock, 1000);
-
-    // Random glitch effect
-    const glitchInterval = setInterval(() => {
-      setGlitching(true);
-      setTimeout(() => setGlitching(false), 150);
-    }, 8000);
-
-    return () => { clearInterval(t); clearInterval(glitchInterval); };
+    return () => clearInterval(t);
   }, []);
 
   const tensionColor = tensionIndex >= 8 ? "#FF2244" : tensionIndex >= 6 ? "#FF8C00" : "#00FF88";
 
   return (
-    <header className="glass-panel flex items-center justify-between px-4 py-2 h-14 shrink-0 relative overflow-hidden scan-effect">
-      {/* Background grid */}
-      <div className="absolute inset-0 grid-bg opacity-50 pointer-events-none" />
-
-      {/* Logo & Title */}
-      <div className="flex items-center gap-3 z-10">
-        {/* Logo Icon */}
-        <div className="relative w-9 h-9 animate-float">
-          <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-            <circle cx="18" cy="18" r="16" stroke="#00D4FF" strokeWidth="1" opacity="0.4" />
-            <circle cx="18" cy="18" r="10" stroke="#00D4FF" strokeWidth="1.5" opacity="0.7" />
-            <circle cx="18" cy="18" r="4" fill="#00D4FF" opacity="0.9" />
-            <line x1="18" y1="2" x2="18" y2="8" stroke="#00D4FF" strokeWidth="1.5" />
-            <line x1="18" y1="28" x2="18" y2="34" stroke="#00D4FF" strokeWidth="1.5" />
-            <line x1="2" y1="18" x2="8" y2="18" stroke="#00D4FF" strokeWidth="1.5" />
-            <line x1="28" y1="18" x2="34" y2="18" stroke="#00D4FF" strokeWidth="1.5" />
-            <path d="M8 8 L12 12 M24 24 L28 28 M8 28 L12 24 M24 12 L28 8" stroke="#00D4FF" strokeWidth="1" opacity="0.5" />
+    <header className="glass-panel flex items-center justify-between px-4 py-2 h-14 shrink-0 relative overflow-hidden mb-1">
+      {/* Brand & Platform Identity */}
+      <div className="flex items-center gap-3">
+        <div className="relative w-8 h-8 flex items-center justify-center rounded-lg bg-cyan-500/10 border border-cyan-500/40 text-cyan-400">
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
           </svg>
         </div>
         <div>
-          <h1 className={`font-orbitron text-xl font-bold neon-text-blue tracking-widest leading-none ${glitching ? 'opacity-70' : ''}`}>
-            NEXUSINTEL
+          <h1 className="font-mono text-lg font-bold text-white tracking-widest leading-none">
+            NEXUS<span className="text-cyan-400">INTEL</span>
           </h1>
-          <p className="text-[9px] text-text-secondary tracking-[4px] uppercase leading-none mt-0.5">Global Intelligence Dashboard</p>
+          <p className="text-[9px] text-slate-400 tracking-[3px] uppercase leading-none mt-1">Global Intelligence Command</p>
         </div>
       </div>
 
-      {/* Center — Global Tension Index */}
-      <div className="flex items-center gap-6 z-10">
-        <div className="flex items-center gap-3 glass-panel px-4 py-1.5 rounded-md">
+      {/* Global Tension Index */}
+      <div className="flex items-center gap-6">
+        <div className="flex items-center gap-3 bg-black/40 border border-slate-700/60 px-3.5 py-1.5 rounded-md">
           <div>
-            <p className="text-[8px] text-text-secondary uppercase tracking-widest">Global Tension Index</p>
+            <p className="text-[8px] text-slate-400 uppercase tracking-widest font-semibold">Global Threat Index</p>
             <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="font-orbitron text-2xl font-bold" style={{ color: tensionColor, textShadow: `0 0 15px ${tensionColor}` }}>
+              <span className="font-mono text-xl font-bold" style={{ color: tensionColor, textShadow: `0 0 10px ${tensionColor}55` }}>
                 {tensionIndex}
               </span>
-              <span className="text-[10px] text-text-secondary">/10</span>
+              <span className="text-[10px] text-slate-400">/ 10</span>
               <span className="text-[10px] font-bold" style={{ color: tensionColor }}>— HIGH</span>
             </div>
           </div>
-          <div className="w-24">
-            <div className="tension-bar">
-              <div className="h-full rounded-full absolute" style={{ left: 0, right: 0, background: "linear-gradient(90deg, #00FF88 0%, #FFD700 40%, #FF8C00 70%, #FF2244 100%)" }} />
-              <div className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full border-2 border-white bg-white shadow-md"
-                style={{ left: `${(tensionIndex / 10) * 100 - 5}%`, boxShadow: `0 0 8px ${tensionColor}` }} />
-            </div>
-            <div className="flex justify-between mt-1">
-              <span className="text-[7px] text-text-muted">LOW</span>
-              <span className="text-[7px] text-text-muted">HIGH</span>
+          <div className="w-20">
+            <div className="h-1.5 rounded-full bg-slate-800 relative overflow-hidden">
+              <div 
+                className="h-full rounded-full transition-all"
+                style={{ width: `${(tensionIndex / 10) * 100}%`, backgroundColor: tensionColor, boxShadow: `0 0 8px ${tensionColor}` }} 
+              />
             </div>
           </div>
         </div>
 
-        {/* Active theaters */}
-        <div className="flex gap-4">
+        {/* System Telemetry */}
+        <div className="flex gap-5">
           {[
             { label: "Active Conflicts", value: "23", color: "#FF2244" },
             { label: "Monitored Zones", value: "147", color: "#00D4FF" },
             { label: "Alerts Today", value: "58", color: "#FF8C00" },
           ].map((item) => (
             <div key={item.label} className="text-center">
-              <div className="font-orbitron text-base font-bold counter-animate" style={{ color: item.color, textShadow: `0 0 10px ${item.color}` }}>
+              <div className="font-mono text-sm font-bold" style={{ color: item.color, textShadow: `0 0 8px ${item.color}44` }}>
                 {item.value}
               </div>
-              <div className="text-[7px] text-text-secondary uppercase tracking-wider leading-none mt-0.5">{item.label}</div>
+              <div className="text-[8px] text-slate-400 uppercase tracking-wider mt-0.5">{item.label}</div>
             </div>
           ))}
         </div>
       </div>
 
-      {/* Right — Live + Clock */}
-      <div className="flex items-center gap-4 z-10">
-        <div className="flex items-center gap-2 glass-panel px-3 py-1.5 rounded-md">
+      {/* Live + Clock */}
+      <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 bg-red-950/40 border border-red-500/30 px-2.5 py-1 rounded">
           <div className="live-dot" />
-          <span className="font-orbitron text-[10px] font-bold text-red-400 tracking-widest">LIVE</span>
+          <span className="font-mono text-[10px] font-bold text-red-400 tracking-widest">LIVE DISPATCH</span>
         </div>
         <div className="text-right">
-          <div className="font-orbitron text-base font-bold neon-text-blue">{time}</div>
-          <div className="text-[8px] text-text-secondary tracking-wider">{date} · GMT+5:30</div>
-        </div>
-        {/* Rotating ring */}
-        <div className="relative w-8 h-8">
-          <svg className="w-full h-full" style={{ animation: "rotate-ring 6s linear infinite" }} viewBox="0 0 30 30">
-            <circle cx="15" cy="15" r="13" fill="none" stroke="rgba(0,212,255,0.4)" strokeWidth="1" strokeDasharray="4 3" />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-2 h-2 rounded-full bg-neon-blue" style={{ boxShadow: "0 0 8px #00D4FF" }} />
-          </div>
+          <div className="font-mono text-sm font-bold text-cyan-400">{time}</div>
+          <div className="text-[8px] text-slate-400 tracking-wider">{date} · GMT+5:30</div>
         </div>
       </div>
     </header>

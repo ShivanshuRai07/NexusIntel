@@ -3,20 +3,20 @@ import { useEffect, useRef, useState } from "react";
 
 // TILE LAYERS
 const TILE_LAYERS = {
+  light: {
+    url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+    attribution: "&copy; OpenStreetMap & CARTO",
+    label: "🌐 Enterprise Light",
+  },
   satellite: {
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    attribution: "Tiles &copy; Esri &mdash; Source: Esri",
+    attribution: "Tiles &copy; Esri",
     label: "🛰 Satellite",
   },
   dark: {
     url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
     attribution: "&copy; OpenStreetMap & CARTO",
-    label: "🌐 Intel Dark",
-  },
-  hybrid: {
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
-    attribution: "Labels &copy; Esri",
-    label: "🔭 Hybrid",
+    label: "🌙 Intel Dark",
   },
 };
 
@@ -55,7 +55,7 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
   // State
   const [activeFilter, setActiveFilter] = useState("All News Nodes");
   const [currentMode, setCurrentMode] = useState("Standard");
-  const [activeLayer, setActiveLayer] = useState<keyof typeof TILE_LAYERS>("satellite");
+  const [activeLayer, setActiveLayer] = useState<keyof typeof TILE_LAYERS>("dark");
   const [isLoaded, setIsLoaded] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [newsMarkers, setNewsMarkers] = useState<any[]>([]);
@@ -130,14 +130,17 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
       const map = L.map(container, {
         center: [25, 18],
         zoom: 3,
-        zoomControl: false,
+        zoomControl: true,
         attributionControl: true,
         minZoom: 2,
         maxZoom: 18,
         preferCanvas: true,
+        scrollWheelZoom: true,
+        dragging: true,
+        touchZoom: true,
+        doubleClickZoom: true,
       });
 
-      L.control.zoom({ position: "bottomright" }).addTo(map);
       map.getContainer().style.background = "#050C1A";
 
       const tile = L.tileLayer(TILE_LAYERS[activeLayer].url, {
@@ -425,6 +428,15 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
                   RELOAD INTEL
                 </button>
                 <button
+                  onClick={() => {
+                    if (mapRef.current) mapRef.current.setView([25, 18], 3);
+                  }}
+                  className="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-[8px] font-bold px-2 py-1 rounded border border-cyan-500/30 flex items-center gap-1 transition-all"
+                  title="Reset Map View"
+                >
+                  🎯 RE-CENTER
+                </button>
+                <button
                   onClick={onToggleMaximize}
                   className="bg-white/10 hover:bg-white/20 text-white text-[8px] font-bold px-2 py-1 rounded border border-white/20 flex items-center gap-1 transition-all"
                   title={isMaximized ? "Restore Default View" : "Maximize Map"}
@@ -513,16 +525,8 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
       </div>
 
       {/* Map container */}
-      <div className="flex-1 relative overflow-hidden" onClick={() => setIsInteracting(true)} onMouseLeave={() => setIsInteracting(false)}>
-        <div id="nexusintel-map" style={{ width: "100%", height: "100%", background: "#050C1A", pointerEvents: isInteracting ? 'auto' : 'none' }} />
-        
-        {!isInteracting && (
-          <div className="absolute inset-0 z-[100] cursor-pointer flex items-center justify-center bg-black/20 group">
-            <div className="px-4 py-2 bg-neon-blue/20 border border-neon-blue/40 rounded-full backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity">
-               <span className="text-neon-blue text-[10px] font-orbitron uppercase tracking-widest font-bold">Click to Activate Map</span>
-            </div>
-          </div>
-        )}
+      <div className="flex-1 relative overflow-hidden">
+        <div id="nexusintel-map" style={{ width: "100%", height: "100%", background: "#050C1A", pointerEvents: "auto" }} />
         
         {/* Legend */}
         <div className="absolute bottom-4 left-2 z-20 glass-panel p-2 text-[8px] space-y-1 pointer-events-none">

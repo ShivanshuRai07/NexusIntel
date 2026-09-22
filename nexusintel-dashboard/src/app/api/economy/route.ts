@@ -1,36 +1,21 @@
 import { NextResponse } from 'next/server';
 
-// Modelling data after World Bank, IMF, and UN datasets
-const ECONOMY_INTEL = [
-  {
-    region: "Asia-Pacific",
-    gdp_growth: 4.8,
-    inflation: 2.1,
-    stability_score: 72, // UN Human Development Index derived
-    source: "International Monetary Fund",
-    outlook: "Positive",
-    drivers: ["Tech Exports", "Semiconductor FABs"]
-  },
-  {
-    region: "Sub-Saharan Africa",
-    gdp_growth: 3.2,
-    inflation: 12.4,
-    stability_score: 41,
-    source: "World Bank",
-    outlook: "Volatile",
-    drivers: ["Energy Scarcity", "Conflict Disruptions"]
-  },
-  {
-    region: "Eurozone",
-    gdp_growth: 0.9,
-    inflation: 2.8,
-    stability_score: 85,
-    source: "IMF / OECD",
-    outlook: "Stable",
-    drivers: ["Energy Transition", "Industrial Re-shoring"]
-  }
-];
-
 export async function GET() {
-  return NextResponse.json(ECONOMY_INTEL);
+  try {
+    const res = await fetch("http://127.0.0.1:8000/api/economy", { cache: "no-store" });
+    if (res.ok) {
+      const data = await res.json();
+      return NextResponse.json(data);
+    }
+  } catch (error) {
+    console.error("Error proxying to backend economy API:", error);
+  }
+
+  return NextResponse.json({
+    crudeOilPrice: 78.45,
+    crudeOilHistory: [70, 71, 73, 72, 74, 75, 76, 75, 77, 78, 79, 78.45],
+    goldPrice: 2145.00,
+    goldHistory: [2050, 2060, 2080, 2075, 2100, 2090, 2120, 2115, 2130, 2140, 2145],
+    status: "fallback"
+  });
 }
