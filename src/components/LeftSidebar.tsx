@@ -1,229 +1,360 @@
 "use client";
-import { useEffect, useRef, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
+import Link from "next/link";
 import DefenseModal from "./DefenseModal";
 import AllDealsModal from "./AllDealsModal";
+import { IntelligenceEvent } from "@/types/intelligence";
 
-const tickerItems = [
-  "⚡ BREAKING: Joint military exercise begins in Baltic region",
-  "📡 INTEL: Satellite imagery reveals new missile silos",
-  "🌐 ALERT: Global internet disruption traced to submarine cable cut",
-  "🛢 UPDATE: OPEC+ emergency meeting called over price collapse",
-  "🚀 BREAKING: Intercontinental ballistic missile test confirmed",
-];
+const WIRE_FILTERS = ["ALL", "GLOBAL", "DOMESTIC", "DEFENSE", "ECONOMY"];
 
 export default function LeftSidebar() {
   const feedRef = useRef<HTMLDivElement>(null);
   const [scrollPos, setScrollPos] = useState(0);
-  
+  const [isPaused, setIsPaused] = useState(false);
+  const [activeFilter, setActiveFilter] = useState("ALL");
+
   // States for API data
-  const [newsEvents, setNewsEvents] = useState<any[]>([]);
+  const [newsEvents, setNewsEvents] = useState<IntelligenceEvent[]>([]);
   const [defenseDeals, setDefenseDeals] = useState<any[]>([]);
   const [selectedDeal, setSelectedDeal] = useState<any>(null);
   const [showAllDeals, setShowAllDeals] = useState(false);
 
-  useEffect(() => {
-    // Fetch live news
-    fetch('/api/news').then(res => res.json()).then(data => {
-      setNewsEvents(data);
-    }).catch(console.error);
+  // Loading & error states
+  const [loadingNews, setLoadingNews] = useState(true);
+  const [loadingDeals, setLoadingDeals] = useState(true);
+  const [newsError, setNewsError] = useState<string | null>(null);
+  const [dealsError, setDealsError] = useState<string | null>(null);
 
-    // Fetch live defense deals
-    fetch('/api/defense').then(res => res.json()).then(data => {
-      setDefenseDeals(data);
-    }).catch(console.error);
+  // Fetch news
+  const fetchNews = useCallback(() => {
+    setLoadingNews(true);
+    setNewsError(null);
+    fetch("/api/intelligence")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load intelligence wire");
+        return res.json();
+      })
+      .then((data) => {
+        if (data && Array.isArray(data.events)) {
+          setNewsEvents(data.events);
+        } else {
+          setNewsEvents([]);
+        }
+        setLoadingNews(false);
+      })
+      .catch(() => {
+        // Fallback to /api/news directly
+        fetch("/api/news")
+          .then((res) => {
+            if (!res.ok) throw new Error("Intelligence gateway offline");
+            return res.json();
+          })
+          .then((data) => {
+            setNewsEvents(Array.isArray(data) ? data : []);
+            setLoadingNews(false);
+          })
+          .catch((err) => {
+            setNewsError(err.message || "Failed to load intelligence wire");
+            setLoadingNews(false);
+          });
+      });
   }, []);
 
-  // Auto-scroller for news feed
+  // Fetch defense deals
+  const fetchDeals = useCallback(() => {
+    setLoadingDeals(true);
+    setDealsError(null);
+    fetch("/api/defense")
+      .then((res) => {
+        if (!res.ok) throw new Error("Failed to load defense procurement logs");
+        return res.json();
+      })
+      .then((data) => {
+        setDefenseDeals(Array.isArray(data) ? data : []);
+        setLoadingDeals(false);
+      })
+      .catch((err) => {
+        setDealsError(err.message || "Arms transfer telemetry unreachable");
+        setLoadingDeals(false);
+      });
+  }, []);
+
   useEffect(() => {
-    if (newsEvents.length === 0) return;
+    fetchNews();
+    fetchDeals();
+  }, [fetchNews, fetchDeals]);
+
+  // Working auto-scroller for news feed with pause on hover
+  useEffect(() => {
+    if (newsEvents.length === 0 || isPaused) return;
     const interval = setInterval(() => {
-      setScrollPos(prev => {
+      setScrollPos((prev) => {
         const el = feedRef.current;
         if (!el) return prev;
         const max = el.scrollHeight / 2;
-        const next = prev + 0.3; // slightly slower scroll
+        const next = prev + 0.35;
         return next >= max ? 0 : next;
       });
     }, 30);
     return () => clearInterval(interval);
-  }, [newsEvents]);
+  }, [newsEvents, isPaused]);
 
   useEffect(() => {
-    if (feedRef.current) feedRef.current.scrollTop = scrollPos;
-  }, [scrollPos]);
+    if (feedRef.current && !isPaused) feedRef.current.scrollTop = scrollPos;
+  }, [scrollPos, isPaused]);
 
-  // Map our smart colors to tailwind/hex UI colors
-  const colorMap: Record<string, string> = {
-    "red": "#FF2244",
-    "green": "#00FF88",
-    "orange": "#FF8C00",
-    "yellow-orange": "#FFD700",
-    "light-blue": "#00D4FF"
-  };
+  // Filter news events based on active category filter
+  const filteredEvents = newsEvents.filter((e) => {
+    if (activeFilter === "ALL") return true;
+    const cat = (e.category || "").toLowerCase();
+    const filt = activeFilter.toLowerCase();
+    if (filt === "defense") return cat === "defense" || e.colorNode === "red";
+    if (filt === "domestic") return cat === "domestic" || e.colorNode === "orange";
+    if (filt === "economy") return cat === "economy" || e.colorNode === "light-blue";
+    if (filt === "global") return cat === "global" || e.colorNode === "green" || e.colorNode === "yellow-orange";
+    return true;
+  });
 
-  const tagMap: Record<string, string> = {
-    "red": "CRITICAL",
-    "green": "POSITIVE",
-    "orange": "DOMESTIC ALERT",
-    "yellow-orange": "UPCOMING RISK",
-    "light-blue": "NATION POSITIVE"
-  };
-
-  // Helper for relative time
-  const getRelativeTime = (isoString: string) => {
-    if(!isoString) return "just now";
+  const getRelativeTime = (isoString?: string) => {
+    if (!isoString) return "just now";
     const diff = Math.floor((Date.now() - new Date(isoString).getTime()) / 60000);
-    if(diff < 60) return `${diff}m ago`;
-    return `${Math.floor(diff/60)}h ago`;
+    if (diff < 1) return "just now";
+    if (diff < 60) return `${diff}m ago`;
+    return `${Math.floor(diff / 60)}h ago`;
   };
 
   return (
     <>
-      <div className="flex flex-col gap-2 h-full overflow-y-auto thin-scroll relative pr-1 pb-4">
-        {/* Live Events Feed */}
-        <div className="glass-panel p-2.5 flex flex-col shrink-0 h-[450px] relative">
-          <div className="section-header hover:bg-white/5 cursor-pointer transition-colors rounded" onClick={() => window.location.href = '/defense-intelligence'}>
-            <div className="live-dot" />
-            Global Live News Feed
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 w-full items-start">
+        {/* ========================================================
+            COLUMN 1: LIVE WIRE INTELLIGENCE FEED
+            ======================================================== */}
+        <div className="panel p-5 flex flex-col shrink-0 relative">
+          <div className="flex items-center justify-between pb-3 mb-3 border-b-2 border-[#1C1917]">
+            <div className="flex items-center gap-2">
+              <span className="live-indicator" />
+              <h3 className="font-playfair text-sm font-black uppercase tracking-wider text-[#1C1917]">
+                Live Wire Intelligence
+              </h3>
+            </div>
+            <span className="text-[9px] text-[#78716C] uppercase font-bold tracking-widest font-mono">
+              OSINT FEED
+            </span>
           </div>
 
-          {newsEvents.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center">
-              <span className="text-[10px] text-neon-blue animate-pulse">Establishing secure link...</span>
+          {/* Working Category Filter Bar */}
+          <div className="flex items-center gap-1 pb-3 mb-3 border-b border-[#E2DBD0] overflow-x-auto thin-scroll">
+            {WIRE_FILTERS.map((f) => (
+              <button
+                key={f}
+                onClick={() => setActiveFilter(f)}
+                className={`px-2.5 py-1 text-[9px] font-bold uppercase tracking-wider rounded-xs transition-colors shrink-0 ${
+                  activeFilter === f
+                    ? "bg-[#C41E3A] text-white font-black"
+                    : "bg-[#F3EFE6] text-[#78716C] hover:text-[#1C1917]"
+                }`}
+              >
+                {f}
+              </button>
+            ))}
+          </div>
+
+          {/* Loading State */}
+          {loadingNews ? (
+            <div className="h-72 flex flex-col items-center justify-center gap-2 text-center">
+              <div className="w-5 h-5 border-2 border-[#C41E3A] border-t-transparent rounded-full animate-spin" />
+              <span className="text-xs text-[#78716C] font-medium">Syncing live dispatch stream...</span>
+            </div>
+          ) : newsError ? (
+            /* Error State with Retry */
+            <div className="h-72 flex flex-col items-center justify-center gap-2 text-center p-4">
+              <div className="text-xs font-bold text-[#C41E3A] uppercase">Wire Feed Unavailable</div>
+              <p className="text-[11px] text-[#78716C] mb-2">{newsError}</p>
+              <button
+                onClick={fetchNews}
+                className="px-3 py-1.5 bg-[#C41E3A] text-white text-[10px] font-bold uppercase rounded-xs"
+              >
+                Retry Wire &rarr;
+              </button>
+            </div>
+          ) : filteredEvents.length === 0 ? (
+            /* Empty State */
+            <div className="h-72 flex flex-col items-center justify-center gap-2 text-center p-4">
+              <div className="text-xs font-bold text-[#1C1917] uppercase">No Intelligence Events Found</div>
+              <p className="text-[11px] text-[#78716C]">No dispatches match the {activeFilter} filter criteria.</p>
+              <button
+                onClick={() => setActiveFilter("ALL")}
+                className="text-xs font-bold text-[#C41E3A] underline mt-1"
+              >
+                Reset to ALL Dispatches
+              </button>
             </div>
           ) : (
-            <div className="overflow-hidden flex-1 mask-fade" ref={feedRef} style={{ overflowY: 'hidden', position: 'relative' }}>
-              <div style={{ animation: "none" }}>
-                {/* Duplicated for seamless loop */}
-                {[...newsEvents, ...newsEvents].map((e, i) => {
-                  const uiColor = colorMap[e.colorNode] || "#00D4FF";
-                  return (
-                    <div
-                      key={`${e.id}-${i}`}
-                      className="mb-2 p-3 rounded bg-white/5 border-l-2 border-white/10 hover:border-white/20 hover:bg-white/[0.08] transition-all group relative overflow-hidden"
-                      style={{ borderLeftColor: uiColor }}
-                    >
-                      {/* Source Branding */}
-                      <div className="flex items-center justify-between mb-1.5">
-                        <div className="flex items-center gap-2">
-                          {e.logo ? (
-                            <img src={e.logo} alt={e.source} className="h-3 w-auto object-contain brightness-110" />
-                          ) : (
-                            <div className="w-1.5 h-1.5 rounded-full" style={{ background: uiColor }} />
-                          )}
-                          <span className="font-orbitron font-bold text-[8px] tracking-[2px]" style={{ color: uiColor }}>
-                            {e.source.toUpperCase()}
-                          </span>
-                        </div>
-                        <span className="text-[7px] text-text-muted font-medium">{getRelativeTime(e.publishedAt)}</span>
-                      </div>
-
-                      {/* Content */}
-                      <p className="text-[10.5px] font-bold text-white leading-tight mb-1 group-hover:text-neon-blue transition-colors">
-                        {e.title}
-                      </p>
-                      <p className="text-[9px] text-text-secondary leading-normal mb-2 opacity-70 group-hover:opacity-100 transition-opacity">
-                        {e.description}
-                      </p>
-
-                      {/* Footer Actions */}
-                      <div className="flex justify-between items-center">
-                        <span className="status-badge text-[6px] py-0.5 px-1.5" style={{ color: uiColor, background: `${uiColor}15`, border: `1px solid ${uiColor}30` }}>
-                          {tagMap[e.colorNode] || "INTEL UPDATE"}
-                        </span>
-                        <a 
-                          href={e.url} 
-                          target="_blank" 
-                          rel="noopener noreferrer"
-                          className="text-[7px] font-bold text-neon-blue hover:text-white flex items-center gap-1 uppercase tracking-widest bg-neon-blue/10 px-2 py-0.5 rounded border border-neon-blue/20 invisible group-hover:visible transition-all"
+            /* Working Feed List */
+            <div
+              className="h-[430px] overflow-hidden relative cursor-pointer"
+              ref={feedRef}
+              onMouseEnter={() => setIsPaused(true)}
+              onMouseLeave={() => setIsPaused(false)}
+            >
+              <div>
+                {[...filteredEvents, ...filteredEvents].map((e, i) => (
+                  <div
+                    key={`${e.id}-${i}`}
+                    className="article-card mb-3 p-3.5 group bg-white border border-[#E2DBD0] rounded-sm hover:border-[#1C1917] transition-all"
+                  >
+                    {/* Header */}
+                    <div className="flex items-center justify-between mb-1.5">
+                      <div className="flex items-center gap-1.5">
+                        <span
+                          className={`severity-badge ${
+                            e.severity === "critical"
+                              ? "badge-critical"
+                              : e.severity === "warning"
+                              ? "badge-warning"
+                              : "badge-info"
+                          }`}
                         >
-                          Source [↗]
-                        </a>
+                          {e.category?.toUpperCase() || "INTEL"}
+                        </span>
+                        <span className="text-[9px] font-bold text-[#78716C] uppercase tracking-wider">
+                          {e.source || "OSINT"}
+                        </span>
+                      </div>
+                      <span className="text-[9px] text-[#78716C] font-mono">
+                        {getRelativeTime(e.timestamp || e.publishedAt)}
+                      </span>
+                    </div>
+
+                    {/* Headline */}
+                    <h4 className="text-xs font-playfair font-black text-[#1C1917] leading-snug group-hover:text-[#C41E3A] transition-colors mb-1">
+                      {e.title}
+                    </h4>
+
+                    {/* Description */}
+                    {e.summary && (
+                      <p className="text-[11px] text-[#44403C] leading-relaxed line-clamp-2 mb-2.5">
+                        {e.summary}
+                      </p>
+                    )}
+
+                    {/* Actionable CTAs: Dossier + Source */}
+                    <div className="flex justify-between items-center pt-2 border-t border-[#E2DBD0]">
+                      <span className="text-[9px] text-[#78716C]">
+                        {e.location?.city ? `${e.location.city}, ` : ""}
+                        {e.location?.country || "International"}
+                      </span>
+                      <div className="flex items-center gap-3">
+                        {e.url && (
+                          <a
+                            href={e.url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[10px] font-bold text-[#78716C] hover:text-[#1C1917] flex items-center gap-0.5 uppercase tracking-wider underline"
+                            onClick={(ev) => ev.stopPropagation()}
+                          >
+                            Source [↗]
+                          </a>
+                        )}
+                        <Link
+                          href={`/intelligence/${e.category || "defense"}`}
+                          className="analysis-cta text-[10px] py-1 px-2.5"
+                          onClick={(ev) => ev.stopPropagation()}
+                        >
+                          <span>Full Analysis</span>
+                          <span className="font-bold">&rarr;</span>
+                        </Link>
                       </div>
                     </div>
-                  );
-                })}
+                  </div>
+                ))}
               </div>
             </div>
           )}
         </div>
 
-        {/* Live Defense Deals */}
-        <div className="glass-panel p-2.5 flex flex-col shrink-0 h-[400px]">
-          <div 
-            className="section-header hover:bg-white/5 cursor-pointer transition-colors rounded flex items-center justify-between group"
-            onClick={() => window.location.href = '/defense-intelligence'}
-          >
-            <div>
-              <span className="text-neon-orange">⚔</span> Defense News & Strategic Deals
-            </div>
+        {/* ========================================================
+            COLUMN 2: DEFENSE PROCUREMENT & ARMS TRANSFERS
+            ======================================================== */}
+        <div className="panel p-5 flex flex-col shrink-0">
+          <div className="flex items-center justify-between pb-3 mb-3 border-b-2 border-[#1C1917]">
             <div className="flex items-center gap-2">
-              <span className="text-[10px] text-text-muted font-bold tracking-tighter uppercase group-hover:text-white transition-colors">
-                SEE DETAILS
-              </span>
-              <span className="text-neon-orange group-hover:translate-x-1 transition-transform">→</span>
+              <span className="text-sm font-bold text-[#C41E3A]">⚔</span>
+              <h3 className="font-playfair text-sm font-black uppercase tracking-wider text-[#1C1917]">
+                Defense & Strategic Deals
+              </h3>
             </div>
+            <button
+              onClick={() => setShowAllDeals(true)}
+              className="text-[10px] font-bold text-[#C41E3A] hover:text-[#9F1730] transition-colors uppercase tracking-widest flex items-center gap-1"
+            >
+              All {defenseDeals.length} Deals &rarr;
+            </button>
           </div>
-          
-          {defenseDeals.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center">
-              <span className="text-[10px] text-neon-orange animate-pulse">Decrypting defense logs...</span>
+
+          {loadingDeals ? (
+            <div className="h-72 flex flex-col items-center justify-center gap-2">
+              <div className="w-5 h-5 border-2 border-[#B8860B] border-t-transparent rounded-full animate-spin" />
+              <span className="text-xs text-[#78716C]">Decrypting arms registries...</span>
+            </div>
+          ) : dealsError ? (
+            <div className="h-72 flex flex-col items-center justify-center gap-2 text-center p-4">
+              <div className="text-xs font-bold text-[#C41E3A] uppercase">Defense Telemetry Error</div>
+              <p className="text-[11px] text-[#78716C] mb-2">{dealsError}</p>
+              <button
+                onClick={fetchDeals}
+                className="px-3 py-1.5 bg-[#C41E3A] text-white text-[10px] font-bold uppercase rounded-xs"
+              >
+                Retry Deals &rarr;
+              </button>
             </div>
           ) : (
-            <div className="flex-1 overflow-y-auto thin-scroll space-y-1.5 pr-1">
-              {defenseDeals.map((deal) => (
-                <div 
-                  key={deal.id} 
-                  className="bg-black/20 border border-white/5 rounded p-2 cursor-pointer hover:border-neon-orange/40 hover:bg-neon-orange/5 transition-all group"
+            <div className="space-y-3 max-h-[460px] overflow-y-auto thin-scroll pr-1">
+              {defenseDeals.slice(0, 6).map((deal) => (
+                <div
+                  key={deal.id}
+                  className="bg-white border border-[#E2DBD0] rounded-sm p-3.5 cursor-pointer hover:border-[#1C1917] hover:shadow-sm transition-all group"
                   onClick={() => setSelectedDeal(deal)}
                 >
                   <div className="flex justify-between items-center mb-1">
-                    <div className="flex items-center gap-1.5 text-[8px] text-text-secondary uppercase tracking-widest">
-                      <span>{deal.country1}</span>
-                      <span>→</span>
-                      <span>{deal.country2}</span>
+                    <div className="flex items-center gap-1.5 text-[9px] font-bold text-[#78716C] uppercase tracking-wider">
+                      <span className="text-[#1C1917]">{deal.country1}</span>
+                      <span className="text-[#C41E3A] font-black">&rarr;</span>
+                      <span className="text-[#1C1917]">{deal.country2}</span>
                     </div>
-                    <span className="text-[8px] text-text-muted">{getRelativeTime(deal.date)}</span>
+                    <span className="text-[9px] text-[#78716C] font-mono">{getRelativeTime(deal.date)}</span>
                   </div>
-                  <div className="text-[9px] font-bold text-white group-hover:text-neon-orange transition-colors">
+
+                  <h4 className="text-xs font-playfair font-black text-[#1C1917] group-hover:text-[#C41E3A] transition-colors leading-snug mb-1.5">
                     {deal.title}
-                  </div>
-                  <div className="flex justify-between items-center mt-1">
-                    <span className="text-[7px] text-neon-blue px-1 py-0.5 rounded bg-neon-blue/10 border border-neon-blue/20">
+                  </h4>
+
+                  <div className="flex justify-between items-center pt-2 border-t border-[#E2DBD0]">
+                    <span className="text-[8px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-xs bg-[#F3EFE6] text-[#44403C]">
                       {deal.category}
                     </span>
-                    <span className="font-orbitron text-[9px] font-bold text-neon-green">{deal.value}</span>
-                  </div>
-                  <div className="mt-1 text-[8px] text-text-muted line-clamp-2 leading-tight">
-                    {deal.details}
+                    <div className="flex items-center gap-3">
+                      <span className="font-orbitron text-xs font-bold text-[#1A6B5A]">
+                        {deal.value}
+                      </span>
+                      <span className="text-[10px] font-bold text-[#C41E3A] group-hover:underline">
+                        Details &rarr;
+                      </span>
+                    </div>
                   </div>
                 </div>
               ))}
-              <div className="pt-2 pb-1 flex justify-center sticky bottom-0 bg-gradient-to-t from-[#0B0F19] to-transparent">
-                <button 
+
+              <div className="pt-2 text-center">
+                <button
                   onClick={() => setShowAllDeals(true)}
-                  className="text-[9px] font-bold text-neon-orange uppercase tracking-widest px-3 py-1.5 rounded-full border border-neon-orange/30 hover:bg-neon-orange/10 hover:border-neon-orange/60 transition-all flex items-center gap-1 shadow-[0_0_10px_rgba(255,140,0,0.1)]"
+                  className="w-full py-2 bg-[#F3EFE6] hover:bg-[#E2DBD0] border border-[#C8BFB0] rounded-sm text-[10px] font-bold text-[#1C1917] uppercase tracking-widest transition-all"
                 >
-                  See More Deals
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                  View All Strategic Procurement Logs &rarr;
                 </button>
               </div>
             </div>
           )}
-        </div>
-
-        {/* Ticker */}
-        <div className="glass-panel-red p-1.5 overflow-hidden shrink-0">
-          <div className="flex items-center gap-2">
-            <span className="text-[8px] font-bold text-red-400 shrink-0 animate-blink font-orbitron">INTEL</span>
-            <div className="overflow-hidden flex-1">
-              <div className="flex gap-8 animate-ticker whitespace-nowrap" style={{ width: "max-content" }}>
-                {[...tickerItems, ...tickerItems].map((item, i) => (
-                  <span key={i} className="text-[8px] text-text-secondary shrink-0">{item}</span>
-                ))}
-              </div>
-            </div>
-          </div>
         </div>
       </div>
 
@@ -234,7 +365,11 @@ export default function LeftSidebar() {
 
       {/* Full Deals List Overlay */}
       {showAllDeals && (
-        <AllDealsModal deals={defenseDeals} onClose={() => setShowAllDeals(false)} onSelectDeal={(d: any) => setSelectedDeal(d)} />
+        <AllDealsModal
+          deals={defenseDeals}
+          onClose={() => setShowAllDeals(false)}
+          onSelectDeal={(d: any) => setSelectedDeal(d)}
+        />
       )}
     </>
   );

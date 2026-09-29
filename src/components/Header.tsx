@@ -1,123 +1,188 @@
 "use client";
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import Link from "next/link";
 
 export default function Header() {
-  const [time, setTime] = useState("");
-  const [date, setDate] = useState("");
-  const [tensionIndex] = useState(8.4);
   const [glitching, setGlitching] = useState(false);
 
   useEffect(() => {
-    const updateClock = () => {
-      const now = new Date();
-      setTime(now.toLocaleTimeString("en-US", { hour12: false }));
-      setDate(now.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "2-digit", year: "numeric" }));
-    };
-    updateClock();
-    const t = setInterval(updateClock, 1000);
-
-    // Random glitch effect
-    const glitchInterval = setInterval(() => {
+    // Subtle occasional emphasis effect — editorial, not cyberpunk
+    const interval = setInterval(() => {
       setGlitching(true);
-      setTimeout(() => setGlitching(false), 150);
-    }, 8000);
-
-    return () => { clearInterval(t); clearInterval(glitchInterval); };
+      setTimeout(() => setGlitching(false), 100);
+    }, 12000);
+    return () => clearInterval(interval);
   }, []);
 
-  const tensionColor = tensionIndex >= 8 ? "#FF2244" : tensionIndex >= 6 ? "#FF8C00" : "#00FF88";
-
   return (
-    <header className="glass-panel flex items-center justify-between px-4 py-2 h-14 shrink-0 relative overflow-hidden scan-effect">
-      {/* Background grid */}
-      <div className="absolute inset-0 grid-bg opacity-50 pointer-events-none" />
+    <header
+      style={{
+        background: "var(--panel)",
+        borderBottom: "3px solid var(--border-dark)",
+      }}
+    >
+      <div
+        className="max-w-[1440px] mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between gap-6"
+      >
+        {/* ── Logo / Masthead ── */}
+        <Link
+          href="/"
+          className="flex items-center gap-4"
+          aria-label="NexusIntel — Home"
+          style={{ textDecoration: "none" }}
+        >
+          {/* Editorial N mark */}
+          <div
+            className="flex items-center justify-center shrink-0"
+            style={{
+              width: "44px",
+              height: "44px",
+              background: "var(--border-dark)",
+              borderRadius: "2px",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "var(--font-editorial)",
+                fontSize: "24px",
+                fontWeight: "900",
+                color: "var(--text-on-dark)",
+                lineHeight: 1,
+                userSelect: "none",
+              }}
+            >
+              N
+            </span>
+          </div>
 
-      {/* Logo & Title */}
-      <div className="flex items-center gap-3 z-10">
-        {/* Logo Icon */}
-        <div className="relative w-9 h-9 animate-float">
-          <svg viewBox="0 0 36 36" fill="none" xmlns="http://www.w3.org/2000/svg" className="w-full h-full">
-            <circle cx="18" cy="18" r="16" stroke="#00D4FF" strokeWidth="1" opacity="0.4" />
-            <circle cx="18" cy="18" r="10" stroke="#00D4FF" strokeWidth="1.5" opacity="0.7" />
-            <circle cx="18" cy="18" r="4" fill="#00D4FF" opacity="0.9" />
-            <line x1="18" y1="2" x2="18" y2="8" stroke="#00D4FF" strokeWidth="1.5" />
-            <line x1="18" y1="28" x2="18" y2="34" stroke="#00D4FF" strokeWidth="1.5" />
-            <line x1="2" y1="18" x2="8" y2="18" stroke="#00D4FF" strokeWidth="1.5" />
-            <line x1="28" y1="18" x2="34" y2="18" stroke="#00D4FF" strokeWidth="1.5" />
-            <path d="M8 8 L12 12 M24 24 L28 28 M8 28 L12 24 M24 12 L28 8" stroke="#00D4FF" strokeWidth="1" opacity="0.5" />
-          </svg>
-        </div>
-        <div>
-          <h1 className={`font-orbitron text-xl font-bold neon-text-blue tracking-widest leading-none ${glitching ? 'opacity-70' : ''}`}>
-            NEXUSINTEL
-          </h1>
-          <p className="text-[9px] text-text-secondary tracking-[4px] uppercase leading-none mt-0.5">Global Intelligence Dashboard</p>
-        </div>
-      </div>
-
-      {/* Center — Global Tension Index */}
-      <div className="flex items-center gap-6 z-10">
-        <div className="flex items-center gap-3 glass-panel px-4 py-1.5 rounded-md">
+          {/* Wordmark + subtitle */}
           <div>
-            <p className="text-[8px] text-text-secondary uppercase tracking-widest">Global Tension Index</p>
-            <div className="flex items-baseline gap-2 mt-0.5">
-              <span className="font-orbitron text-2xl font-bold" style={{ color: tensionColor, textShadow: `0 0 15px ${tensionColor}` }}>
-                {tensionIndex}
-              </span>
-              <span className="text-[10px] text-text-secondary">/10</span>
-              <span className="text-[10px] font-bold" style={{ color: tensionColor }}>— HIGH</span>
-            </div>
+            <h1
+              className={`text-masthead tracking-widest leading-none transition-opacity duration-75 ${
+                glitching ? "opacity-80" : "opacity-100"
+              }`}
+              style={{
+                fontFamily: "var(--font-editorial)",
+                fontSize: "clamp(20px, 2.5vw, 30px)",
+                fontWeight: "900",
+                letterSpacing: "6px",
+                color: "var(--text)",
+              }}
+            >
+              NEXUSINTEL
+            </h1>
+            <p
+              style={{
+                fontFamily: "var(--font-ui)",
+                fontSize: "9px",
+                fontWeight: "600",
+                letterSpacing: "4px",
+                textTransform: "uppercase",
+                color: "var(--text-muted)",
+                marginTop: "3px",
+                lineHeight: 1,
+              }}
+            >
+              Global Intelligence Platform
+            </p>
           </div>
-          <div className="w-24">
-            <div className="tension-bar">
-              <div className="h-full rounded-full absolute" style={{ left: 0, right: 0, background: "linear-gradient(90deg, #00FF88 0%, #FFD700 40%, #FF8C00 70%, #FF2244 100%)" }} />
-              <div className="absolute top-1/2 -translate-y-1/2 w-2.5 h-2.5 rounded-full border-2 border-white bg-white shadow-md"
-                style={{ left: `${(tensionIndex / 10) * 100 - 5}%`, boxShadow: `0 0 8px ${tensionColor}` }} />
-            </div>
-            <div className="flex justify-between mt-1">
-              <span className="text-[7px] text-text-muted">LOW</span>
-              <span className="text-[7px] text-text-muted">HIGH</span>
-            </div>
+        </Link>
+
+        {/* ── Center — edition info ── */}
+        <div
+          className="hidden md:flex flex-col items-center gap-1 text-center"
+          style={{ flex: "1 1 auto" }}
+        >
+          <div
+            style={{
+              width: "1px",
+              height: "32px",
+              background: "var(--border-strong)",
+              display: "none",
+            }}
+          />
+          <div
+            style={{
+              fontFamily: "var(--font-ui)",
+              fontSize: "9px",
+              letterSpacing: "3px",
+              textTransform: "uppercase",
+              color: "var(--text-muted)",
+            }}
+          >
+            REAL-TIME · AI-POWERED · MULTI-SOURCE INTELLIGENCE
+          </div>
+          <div
+            style={{
+              height: "1px",
+              width: "240px",
+              background: "linear-gradient(90deg, transparent, var(--border-strong), transparent)",
+            }}
+          />
+          <div
+            style={{
+              fontFamily: "var(--font-ui)",
+              fontSize: "9px",
+              letterSpacing: "2px",
+              textTransform: "uppercase",
+              color: "var(--text-muted)",
+            }}
+          >
+            GEOPOLITICS · DEFENSE · ECONOMICS · TECHNOLOGY · CLIMATE · CYBER
           </div>
         </div>
 
-        {/* Active theaters */}
-        <div className="flex gap-4">
-          {[
-            { label: "Active Conflicts", value: "23", color: "#FF2244" },
-            { label: "Monitored Zones", value: "147", color: "#00D4FF" },
-            { label: "Alerts Today", value: "58", color: "#FF8C00" },
-          ].map((item) => (
-            <div key={item.label} className="text-center">
-              <div className="font-orbitron text-base font-bold counter-animate" style={{ color: item.color, textShadow: `0 0 10px ${item.color}` }}>
-                {item.value}
-              </div>
-              <div className="text-[7px] text-text-secondary uppercase tracking-wider leading-none mt-0.5">{item.label}</div>
-            </div>
-          ))}
+        {/* ── Right — edition label ── */}
+        <div className="flex flex-col items-end gap-1 shrink-0">
+          <div
+            className="flex items-center gap-2 px-3 py-1"
+            style={{
+              background: "var(--accent-red)",
+              borderRadius: "2px",
+            }}
+          >
+            <div
+              style={{
+                width: "6px",
+                height: "6px",
+                borderRadius: "50%",
+                background: "white",
+                animation: "live-pulse 2s ease-in-out infinite",
+              }}
+            />
+            <span
+              style={{
+                fontFamily: "var(--font-ui)",
+                fontSize: "10px",
+                fontWeight: "700",
+                letterSpacing: "2px",
+                color: "white",
+              }}
+            >
+              LIVE INTELLIGENCE
+            </span>
+          </div>
+          <span
+            style={{
+              fontFamily: "var(--font-ui)",
+              fontSize: "9px",
+              color: "var(--text-muted)",
+              letterSpacing: "1px",
+            }}
+          >
+            CONTINUOUSLY UPDATED
+          </span>
         </div>
       </div>
 
-      {/* Right — Live + Clock */}
-      <div className="flex items-center gap-4 z-10">
-        <div className="flex items-center gap-2 glass-panel px-3 py-1.5 rounded-md">
-          <div className="live-dot" />
-          <span className="font-orbitron text-[10px] font-bold text-red-400 tracking-widest">LIVE</span>
-        </div>
-        <div className="text-right">
-          <div className="font-orbitron text-base font-bold neon-text-blue">{time}</div>
-          <div className="text-[8px] text-text-secondary tracking-wider">{date} · GMT+5:30</div>
-        </div>
-        {/* Rotating ring */}
-        <div className="relative w-8 h-8">
-          <svg className="w-full h-full" style={{ animation: "rotate-ring 6s linear infinite" }} viewBox="0 0 30 30">
-            <circle cx="15" cy="15" r="13" fill="none" stroke="rgba(0,212,255,0.4)" strokeWidth="1" strokeDasharray="4 3" />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-2 h-2 rounded-full bg-neon-blue" style={{ boxShadow: "0 0 8px #00D4FF" }} />
-          </div>
-        </div>
-      </div>
+      {/* ── Thick bottom decorative rule ── */}
+      <div
+        style={{
+          height: "2px",
+          background:
+            "linear-gradient(90deg, var(--accent-red) 0%, var(--border-dark) 30%, var(--border-dark) 100%)",
+        }}
+      />
     </header>
   );
 }

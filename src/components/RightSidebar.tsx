@@ -1,49 +1,113 @@
 "use client";
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import Link from "next/link";
 
 // Defence budgets (2024 SIPRI estimates, USD billions)
 const defenceBudgets = [
-  { flag: "🇺🇸", name: "United States", code: "USA", budget: 886, change: "+3.2%", color: "#00D4FF", rank: 1 },
-  { flag: "🇨🇳", name: "China", code: "CHN", budget: 296, change: "+7.2%", color: "#FF4444", rank: 2 },
-  { flag: "🇷🇺", name: "Russia", code: "RUS", budget: 109, change: "+24%", color: "#FF8C00", rank: 3 },
-  { flag: "🇮🇳", name: "India", code: "IND", budget: 83, change: "+4.2%", color: "#00FF88", rank: 4 },
-  { flag: "🇸🇦", name: "Saudi Arabia", code: "KSA", budget: 75, change: "+2.9%", color: "#FFD700", rank: 5 },
-  { flag: "🇬🇧", name: "United Kingdom", code: "GBR", budget: 68, change: "+1.8%", color: "#8B5CF6", rank: 6 },
-  { flag: "🇩🇪", name: "Germany", code: "DEU", budget: 66, change: "+9.4%", color: "#00BFFF", rank: 7 },
-  { flag: "🇰🇷", name: "South Korea", code: "KOR", budget: 47, change: "+3.9%", color: "#FF6B35", rank: 8 },
-  { flag: "🇫🇷", name: "France", code: "FRA", budget: 46, change: "+2.1%", color: "#A78BFA", rank: 9 },
-  { flag: "🇯🇵", name: "Japan", code: "JPN", budget: 45, change: "+26%", color: "#34D399", rank: 10 },
+  { flag: "🇺🇸", name: "United States", code: "USA", budget: 886, change: "+3.2%", color: "#1D4E89", rank: 1 },
+  { flag: "🇨🇳", name: "China", code: "CHN", budget: 296, change: "+7.2%", color: "#C41E3A", rank: 2 },
+  { flag: "🇷🇺", name: "Russia", code: "RUS", budget: 109, change: "+24%", color: "#B8600B", rank: 3 },
+  { flag: "🇮🇳", name: "India", code: "IND", budget: 83, change: "+4.2%", color: "#1A6B5A", rank: 4 },
+  { flag: "🇸🇦", name: "Saudi Arabia", code: "KSA", budget: 75, change: "+2.9%", color: "#B8860B", rank: 5 },
+  { flag: "🇬🇧", name: "United Kingdom", code: "GBR", budget: 68, change: "+1.8%", color: "#5B2D8E", rank: 6 },
+  { flag: "🇩🇪", name: "Germany", code: "DEU", budget: 66, change: "+9.4%", color: "#2D6A4F", rank: 7 },
+  { flag: "🇰🇷", name: "South Korea", code: "KOR", budget: 47, change: "+3.9%", color: "#C44536", rank: 8 },
+  { flag: "🇫🇷", name: "France", code: "FRA", budget: 46, change: "+2.1%", color: "#3B82F6", rank: 9 },
+  { flag: "🇯🇵", name: "Japan", code: "JPN", budget: 45, change: "+26%", color: "#DC2626", rank: 10 },
 ];
 
-const maxBudget = Math.max(...defenceBudgets.map(d => d.budget));
+const maxBudget = Math.max(...defenceBudgets.map((d) => d.budget));
 
 const alliances = [
-  { name: "NATO", members: 31, color: "#00D4FF", active: true },
-  { name: "SCO", members: 9, color: "#8B5CF6", active: true },
-  { name: "CSTO", members: 6, color: "#FF2244", active: true },
-  { name: "QUAD", members: 4, color: "#00FF88", active: false },
-  { name: "BRICS", members: 11, color: "#FF8C00", active: true },
+  { name: "NATO", members: 31, color: "#1D4E89", status: "High Readiness" },
+  { name: "SCO", members: 9, color: "#5B2D8E", status: "Active Dialogue" },
+  { name: "CSTO", members: 6, color: "#C41E3A", status: "Border Deployment" },
+  { name: "QUAD", members: 4, color: "#1A6B5A", status: "Maritime Patrols" },
+  { name: "BRICS+", members: 11, color: "#B8860B", status: "Financial Pact" },
 ];
 
 export default function RightSidebar() {
   const [expanded, setExpanded] = useState<number | null>(null);
+  const [criticalNews, setCriticalNews] = useState<any[]>([]);
+
+  useEffect(() => {
+    fetch("/api/news")
+      .then((res) => res.json())
+      .then((data) => {
+        const reds = (Array.isArray(data) ? data : [])
+          .filter((item: any) => item.colorNode === "red" || item.colorNode === "orange")
+          .slice(0, 3);
+        setCriticalNews(reds);
+      })
+      .catch(console.error);
+  }, []);
 
   return (
-    <div className="flex flex-col gap-1.5 h-full overflow-hidden">
+    <div className="flex flex-col gap-5 w-full">
+      {/* Critical Flash Dispatches */}
+      {criticalNews.length > 0 && (
+        <div className="panel p-4 flex flex-col border-l-4 border-l-[#C41E3A]">
+          <div className="flex items-center justify-between pb-2 mb-2 border-b border-[#E2DBD0]">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-[#C41E3A] animate-ping" />
+              <h3 className="font-playfair text-xs font-black uppercase tracking-wider text-[#C41E3A]">
+                Critical Flash Bulletins
+              </h3>
+            </div>
+            <span className="text-[9px] font-bold text-[#78716C] uppercase">RED DESK</span>
+          </div>
+
+          <div className="space-y-2.5">
+            {criticalNews.map((item, idx) => (
+              <div key={idx} className="pb-2 border-b border-[#E2DBD0] last:border-b-0 last:pb-0">
+                <div className="flex items-center justify-between text-[8px] text-[#78716C] font-semibold uppercase mb-0.5">
+                  <span className="text-[#C41E3A] font-bold">{item.source || "FLASH"}</span>
+                  <span>{item.location?.country || "ZONE 1"}</span>
+                </div>
+                {item.url ? (
+                  <a
+                    href={item.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="block text-xs font-playfair font-black text-[#1C1917] leading-tight hover:text-[#C41E3A] transition-colors"
+                  >
+                    {item.title}
+                  </a>
+                ) : (
+                  <Link
+                    href="/intelligence/defense"
+                    className="block text-xs font-playfair font-black text-[#1C1917] leading-tight hover:text-[#C41E3A] transition-colors"
+                  >
+                    {item.title}
+                  </Link>
+                )}
+                <div className="mt-1 flex items-center justify-between text-[8px] text-[#78716C]">
+                  <span>OSINT Verified</span>
+                  <Link href="/intelligence/defense" className="text-[#C41E3A] font-bold hover:underline">
+                    Dossier &rarr;
+                  </Link>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Defence Budget Rankings */}
-      <div className="glass-panel p-2.5 flex flex-col flex-1 overflow-hidden">
-        <div className="section-header flex items-center gap-2">
-          <svg width="10" height="10" viewBox="0 0 10 10">
-            <polygon points="5,0 10,10 0,10" stroke="#FF8C00" strokeWidth="1" fill="none" />
-            <circle cx="5" cy="6.5" r="1.5" fill="#FF8C00" />
-          </svg>
-          Defence Budget Rankings
-          <span className="ml-auto text-[6px] px-1.5 py-0.5 rounded bg-orange-500/10 text-orange-400 border border-orange-500/20 font-bold uppercase tracking-widest">
-            SIPRI 2024
+      <div className="panel p-4 flex flex-col">
+        <div className="flex items-center justify-between pb-3 mb-3 border-b-2 border-[#1C1917]">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-[#B8860B]">🏛</span>
+            <h3 className="font-playfair text-sm font-black uppercase tracking-wider text-[#1C1917]">
+              SIPRI Military Budgets
+            </h3>
+          </div>
+          <span className="text-[9px] px-1.5 py-0.5 rounded-sm bg-[#F3EFE6] border border-[#C8BFB0] text-[#44403C] font-bold uppercase tracking-wider">
+            2024–25 USD
           </span>
         </div>
 
-        <div className="flex-1 overflow-y-auto thin-scroll space-y-1 mt-1">
+        <div className="space-y-2">
           {defenceBudgets.map((country, i) => {
             const isExpanded = expanded === i;
             const barWidth = `${(country.budget / maxBudget) * 100}%`;
@@ -51,37 +115,41 @@ export default function RightSidebar() {
             return (
               <div
                 key={country.code}
-                className="rounded p-1.5 cursor-pointer transition-all"
+                className="rounded-sm p-2 cursor-pointer transition-all border border-transparent hover:border-[#C8BFB0] hover:bg-[#F3EFE6]/60"
                 style={{
-                  background: isExpanded ? `rgba(${country.color === '#FF4444' ? '255,68,68' : '0,212,255'},0.06)` : 'rgba(255,255,255,0.02)',
-                  border: `1px solid ${isExpanded ? country.color + '55' : 'rgba(255,255,255,0.05)'}`,
+                  background: isExpanded ? "#F3EFE6" : "transparent",
+                  borderColor: isExpanded ? "#C8BFB0" : "transparent",
                 }}
                 onClick={() => setExpanded(isExpanded ? null : i)}
               >
-                <div className="flex items-center gap-1.5">
-                  <span className="text-[8px] font-bold font-orbitron" style={{ color: country.color, minWidth: "14px" }}>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold font-orbitron text-[#78716C] min-w-[18px]">
                     #{country.rank}
                   </span>
-                  <span className="text-sm leading-none">{country.flag}</span>
+                  <span className="text-base leading-none">{country.flag}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-bold text-text-primary truncate">{country.name}</span>
+                      <span className="text-xs font-bold text-[#1C1917] truncate">{country.name}</span>
                       <div className="flex items-center gap-1.5 shrink-0 ml-1">
-                        <span className="text-[8px] font-bold font-orbitron" style={{ color: country.color }}>
+                        <span className="text-xs font-bold font-orbitron text-[#1C1917]">
                           ${country.budget}B
                         </span>
-                        <span className="text-[7px] font-bold" style={{ color: isPositive ? "#FF4444" : "#00FF88" }}>
+                        <span
+                          className={`text-[9px] font-bold font-orbitron ${
+                            isPositive ? "text-[#C41E3A]" : "text-[#1A6B5A]"
+                          }`}
+                        >
                           {country.change}
                         </span>
                       </div>
                     </div>
-                    <div className="mt-1 h-1 rounded-full overflow-hidden bg-white/5">
+                    {/* Progress Bar */}
+                    <div className="mt-1 h-1.5 rounded-full overflow-hidden bg-[#E2DBD0]">
                       <div
-                        className="h-full rounded-full transition-all duration-1000"
+                        className="h-full rounded-full transition-all duration-700"
                         style={{
                           width: barWidth,
-                          background: `linear-gradient(90deg, ${country.color}66, ${country.color})`,
-                          boxShadow: `0 0 4px ${country.color}88`,
+                          backgroundColor: country.color,
                         }}
                       />
                     </div>
@@ -89,14 +157,22 @@ export default function RightSidebar() {
                 </div>
 
                 {isExpanded && (
-                  <div className="mt-1.5 pt-1.5 border-t border-white/10 grid grid-cols-2 gap-1">
-                    <div className="text-center">
-                      <div className="text-[8px] font-bold" style={{ color: country.color }}>{country.code}</div>
-                      <div className="text-[6px] text-text-muted">Country Code</div>
+                  <div className="mt-2 pt-2 border-t border-[#E2DBD0] grid grid-cols-2 gap-2 text-center animate-fade-in">
+                    <div className="bg-white p-1 rounded-sm border border-[#E2DBD0]">
+                      <div className="text-[10px] font-bold font-orbitron" style={{ color: country.color }}>
+                        {country.code}
+                      </div>
+                      <div className="text-[8px] text-[#78716C] uppercase font-medium">Standard Code</div>
                     </div>
-                    <div className="text-center">
-                      <div className="text-[8px] font-bold" style={{ color: isPositive ? "#FF4444" : "#00FF88" }}>{country.change}</div>
-                      <div className="text-[6px] text-text-muted">YoY Change</div>
+                    <div className="bg-white p-1 rounded-sm border border-[#E2DBD0]">
+                      <div
+                        className={`text-[10px] font-bold font-orbitron ${
+                          isPositive ? "text-[#C41E3A]" : "text-[#1A6B5A]"
+                        }`}
+                      >
+                        {country.change}
+                      </div>
+                      <div className="text-[8px] text-[#78716C] uppercase font-medium">YoY Procurement</div>
                     </div>
                   </div>
                 )}
@@ -107,20 +183,35 @@ export default function RightSidebar() {
       </div>
 
       {/* Alliance Network */}
-      <div className="glass-panel p-2.5">
-        <div className="section-header">
-          <span>⚡</span> Alliance Network
+      <div className="panel p-4 flex flex-col">
+        <div className="flex items-center justify-between pb-3 mb-3 border-b-2 border-[#1C1917]">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold text-[#1D4E89]">🛡</span>
+            <h3 className="font-playfair text-sm font-black uppercase tracking-wider text-[#1C1917]">
+              Strategic Treaty Blocs
+            </h3>
+          </div>
+          <span className="text-[9px] text-[#78716C] uppercase font-bold tracking-widest">
+            READINESS
+          </span>
         </div>
-        <div className="space-y-1.5">
+
+        <div className="space-y-3">
           {alliances.map((a) => (
-            <div key={a.name} className="flex items-center gap-2">
-              <div className="w-1.5 h-1.5 rounded-full" style={{ background: a.color, boxShadow: `0 0 6px ${a.color}` }} />
-              <span className="text-[9px] font-bold" style={{ color: a.color }}>{a.name}</span>
-              <div className="flex-1 h-0.5 bg-white/5 rounded-full overflow-hidden">
-                <div style={{ width: `${Math.min(a.members * 6, 100)}%`, background: a.color, height: '100%' }} />
+            <div key={a.name} className="flex flex-col gap-1 p-2 rounded-sm bg-[#F3EFE6]/50 border border-[#E2DBD0]">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: a.color }} />
+                  <span className="text-xs font-bold text-[#1C1917]">{a.name}</span>
+                </div>
+                <span className="text-[9px] font-bold uppercase tracking-wider text-[#1A6B5A]">
+                  {a.status}
+                </span>
               </div>
-              <span className="text-[8px] text-text-secondary">{a.members}</span>
-              {a.active && <div className="w-1 h-1 rounded-full bg-neon-green animate-blink" />}
+              <div className="flex items-center justify-between text-[10px] text-[#78716C] pt-0.5">
+                <span>Signatory Members: <strong className="text-[#1C1917] font-orbitron">{a.members} Nations</strong></span>
+                <span className="text-[8px] uppercase tracking-widest text-[#78716C]">Active Treaty</span>
+              </div>
             </div>
           ))}
         </div>

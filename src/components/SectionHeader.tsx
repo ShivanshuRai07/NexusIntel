@@ -8,48 +8,80 @@ interface SectionHeaderProps {
   icon?: React.ReactNode;
   subtitle?: string;
   color?: string;
+  category?: string;
 }
 
-export default function SectionHeader({ title, href, icon, subtitle, color = "var(--neon-blue)" }: SectionHeaderProps) {
+export default function SectionHeader({
+  title,
+  href,
+  icon,
+  subtitle,
+  color = "var(--accent-red)",
+  category,
+}: SectionHeaderProps) {
   return (
-    <div className="flex flex-col mb-4 pt-8 first:pt-4 group cursor-pointer">
-      <Link href={href}>
-        <div className="flex items-center justify-between group-hover:opacity-80 transition-opacity">
-          <div className="flex items-center gap-3">
-            {icon && <div style={{ color }}>{icon}</div>}
-            <div>
-              <h2 className="section-header !text-base !mb-0 !border-none !p-0" style={{ color }}>
-                {title}
-              </h2>
-              {subtitle && (
-                <p className="text-[10px] text-text-secondary font-orbitron tracking-widest uppercase mt-0.5 opacity-70">
-                  {subtitle}
-                </p>
-              )}
-            </div>
+    <div className="mb-4">
+      {/* Top rule */}
+      <hr className="section-divider mb-2" />
+
+      <div className="flex items-start justify-between gap-4">
+        {/* Left — category label + title */}
+        <div>
+          <div className="cat-label mb-1" style={{ color }}>
+            {/* Live dot */}
+            <span
+              style={{
+                width: "8px",
+                height: "8px",
+                borderRadius: "50%",
+                background: color,
+                display: "inline-block",
+                flexShrink: 0,
+              }}
+            />
+            {icon && <span>{icon}</span>}
+            {(category || title).toUpperCase()}
           </div>
-          <div className="flex items-center gap-2">
-            <span className="text-[10px] text-text-muted font-bold tracking-tighter uppercase group-hover:text-white transition-colors">
-              DETAILED ANALYSIS
-            </span>
-            <svg 
-              width="14" 
-              height="14" 
-              viewBox="0 0 24 24" 
-              fill="none" 
-              stroke="currentColor" 
-              strokeWidth="2.5" 
-              strokeLinecap="round" 
-              strokeLinejoin="round"
-              className="group-hover:translate-x-1 transition-transform"
-              style={{ color }}
+          <h3 className="font-playfair text-base font-black text-[#1C1917] leading-snug">
+            {title}
+          </h3>
+          {subtitle && (
+            <p
+              style={{
+                fontFamily: "var(--font-ui)",
+                fontSize: "11px",
+                color: "var(--text-muted)",
+                marginTop: "2px",
+              }}
             >
-              <path d="M5 12h14M12 5l7 7-7 7"/>
-            </svg>
-          </div>
+              {subtitle}
+            </p>
+          )}
         </div>
-      </Link>
-      <div className="h-[1px] w-full mt-2 bg-gradient-to-r from-white/20 to-transparent" />
+
+        {/* Right — View All link */}
+        <Link
+          href={href}
+          className="analysis-cta shrink-0 text-[10px] tracking-wider transition-all"
+        >
+          <span>VIEW FULL ANALYSIS</span>
+          <svg
+            width="12"
+            height="12"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          >
+            <path d="M5 12h14M12 5l7 7-7 7" />
+          </svg>
+        </Link>
+      </div>
+
+      {/* Bottom thin divider */}
+      <hr className="section-divider-light mt-2" />
     </div>
   );
 }
