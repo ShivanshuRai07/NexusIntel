@@ -78,18 +78,21 @@
 .analysis-cta {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 8px 14px;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 10px;
   background: #C41E3A;
   color: #FFFFFF !important;
   border: 1px solid #C41E3A;
   font-family: var(--font-ui);
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.5px;
   text-transform: uppercase;
   text-decoration: none;
   border-radius: 3px;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.2s ease;
   cursor: pointer;
 }
@@ -279,6 +282,11 @@ html, body {
   color: var(--text-secondary);
   border: 1px solid var(--border);
 }
+.badge-info {
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  border: 1px solid var(--border-strong);
+}
 
 /* ─────────────────────────────────────────────
    METRIC CARDS
@@ -328,14 +336,9 @@ html, body {
    ───────────────────────────────────────────── */
 .article-card {
   display: flex;
-  gap: 12px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border);
+  flex-direction: column;
   cursor: pointer;
   transition: all 0.2s ease;
-}
-.article-card:last-child {
-  border-bottom: none;
 }
 .article-card:hover .article-headline {
   color: var(--accent-red);
