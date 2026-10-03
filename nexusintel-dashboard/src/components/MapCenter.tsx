@@ -1,32 +1,47 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
+import { useTheme } from "@/context/ThemeContext";
 
-// TILE LAYERS
-const TILE_LAYERS = {
-  light: {
-    url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-    attribution: "&copy; OpenStreetMap & CARTO",
-    label: "🌐 Enterprise Light",
+interface TileConfig {
+  url: string;
+  labelsUrl?: string;
+  attribution: string;
+  label: string;
+  maxZoom?: number;
+}
+
+// TILE LAYERS — High-reliability ESRI ArcGIS tiles (NO WATERMARK, NO API KEY REQUIRED)
+const TILE_LAYERS: Record<string, TileConfig> = {
+  dark: {
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    labelsUrl: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ",
+    label: "🌙 Night Canvas",
+    maxZoom: 16,
   },
   satellite: {
     url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    attribution: "Tiles &copy; Esri",
-    label: "🛰 Satellite",
+    labelsUrl: "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Tiles &copy; Esri &mdash; Source: Esri, Maxar, Earthstar Geographics",
+    label: "🛰️ Satellite",
+    maxZoom: 18,
   },
-  dark: {
-    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-    attribution: "&copy; OpenStreetMap & CARTO",
-    label: "🌙 Intel Dark",
+  light: {
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    labelsUrl: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Tiles &copy; Esri &mdash; Esri, DeLorme, NAVTEQ",
+    label: "☀️ Day Canvas",
+    maxZoom: 16,
   },
 };
 
 // Map color codes to hex for leaflet
 const COLOR_MAP: Record<string, string> = {
-  "red": "#FF2244",           // Wars, attacks
-  "green": "#00FF88",         // Positive global news
-  "orange": "#FF8C00",        // India domestic (terror/riot/disaster)
-  "yellow-orange": "#FFD700", // Upcoming issues/floods
-  "light-blue": "#00D4FF"     // Good news nationwide/economy
+  "red": "#EF4444",           // Flashpoints, attacks
+  "green": "#10B981",         // Constructive news
+  "orange": "#F59E0B",        // Domestic alerts
+  "yellow-orange": "#EAB308", // Risk notices
+  "light-blue": "#38BDF8"     // Economic / Infrastructure
 };
 
 const filterOptions = ["All News Nodes", "Critical (Red)", "Warnings (Orange)", "Positive (Green)", "Economy (Blue)"];
@@ -38,6 +53,7 @@ interface MapCenterProps {
 }
 
 export default function MapCenter({ isMaximized = false, onToggleMaximize }: MapCenterProps) {
+  const { theme } = useTheme();
   const mapRef = useRef<any>(null);
   const [isInteracting, setIsInteracting] = useState(false);
   
@@ -63,6 +79,16 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
   const [liveShips, setLiveShips] = useState<any[]>([]);
   const conflictGroupRef = useRef<any>(null);
   const shipsGroupRef = useRef<any>(null);
+
+  // Synchronize base layer with global theme if not explicitly set to satellite
+  useEffect(() => {
+    if (!isLoaded || !mapRef.current) return;
+    if (activeLayer === "satellite") return; // Respect satellite selection
+    const target = theme === "light" ? "light" : "dark";
+    if (activeLayer !== target) {
+      switchLayer(target);
+    }
+  }, [theme, isLoaded]);
 
   // Fetch live news from API
   useEffect(() => {
@@ -141,13 +167,23 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
         doubleClickZoom: true,
       });
 
-      map.getContainer().style.background = "#050C1A";
+      map.getContainer().style.background = "var(--map-bg, #080C14)";
 
-      const tile = L.tileLayer(TILE_LAYERS[activeLayer].url, {
-        attribution: TILE_LAYERS[activeLayer].attribution,
-        maxZoom: 18,
+      const cfg = TILE_LAYERS[activeLayer];
+      const tile = L.tileLayer(cfg.url, {
+        attribution: cfg.attribution,
+        maxZoom: cfg.maxZoom || 18,
       }).addTo(map);
       tileLayerRef.current = tile;
+
+      if (cfg.labelsUrl) {
+        const labels = L.tileLayer(cfg.labelsUrl, {
+          opacity: 0.85,
+          zIndex: 4,
+          maxZoom: cfg.maxZoom || 18,
+        }).addTo(map);
+        satLabelLayerRef.current = labels;
+      }
 
       mapRef.current = map;
       mapInstance = map;
@@ -181,70 +217,88 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
         if (activeFilter === "Positive (Green)" && news.colorNode !== "green") return;
         if (activeFilter === "Economy (Blue)" && news.colorNode !== "light-blue") return;
 
-        const color = COLOR_MAP[news.colorNode] || "#00D4FF";
+        const color = COLOR_MAP[news.colorNode] || "#38BDF8";
         const icon = L.divIcon({
           className: "",
           html: `
-            <div style="position:relative;width:32px;height:32px;display:flex;align-items:center;justify-content:center; cursor:pointer;">
-              <div style="position:absolute;width:32px;height:32px;border-radius:50%;background:transparent;border:2px solid ${color};animation:nexus-pulse 2s ease-out infinite;opacity:0.7;"></div>
-              <div style="width:8px;height:8px;border-radius:50%;background:${color};box-shadow:0 0 10px ${color};z-index:10;"></div>
-            </div>
-          `,
-          iconSize: [32, 32],
-          iconAnchor: [16, 16]
-        });
-
-        const marker = L.marker([news.lat, news.lng], { icon });
-        const sourceBranding = news.logo ? `<img src="${news.logo}" style="height:12px;width:auto;object-fit:contain;margin-right:6px;" />` : `<div style="width:8px;height:8px;border-radius:50%;background:${color};margin-right:6px;"></div>`;
-
-        marker.bindPopup(`
-          <div style="background:rgba(10,15,25,0.98);border:1px solid ${color};border-radius:12px;padding:12px;min-width:260px;color:#E2E8F0;font-family:Inter,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,0.5);backdrop-filter:blur(10px);">
-            <div style="display:flex;align-items:center;margin-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px;">
-              ${sourceBranding}
-              <strong style="font-family:Orbitron;font-size:10px;color:${color};letter-spacing:1px;text-transform:uppercase;">${news.source}</strong>
-            </div>
-            <h4 style="font-size:13px;font-weight:800;color:#FFF;margin-bottom:8px;line-height:1.3;">${news.title}</h4>
-            <p style="font-size:10.5px;color:#94A3B8;line-height:1.5;margin-bottom:12px;">${news.description}</p>
-            <div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;">
-              <span style="color:#00D4FF;font-weight:bold;">📍 ${news.country}</span>
-              <span style="color:#64748B;">${new Date(news.publishedAt).toLocaleTimeString()}</span>
-            </div>
-          </div>
-        `, { className: "nexusintel-popup" });
-        nexusGroup.addLayer(marker);
-      });
-
-      // 2. Conflict Markers (ACLED Pattern)
-      conflictMarkers.forEach((event) => {
-        const icon = L.divIcon({
-          className: "",
-          html: `
-            <div style="position:relative;width:24px;height:24px;display:flex;align-items:center;justify-content:center;">
-              <div style="position:absolute;inset:0;border:1px dashed #FF2244;border-radius:50%;animation:rotate-ring 4s linear infinite;"></div>
-              <div style="width:2px;height:14px;background:#FF2244;position:absolute;"></div>
-              <div style="width:14px;height:2px;background:#FF2244;position:absolute;"></div>
-              <div style="width:4px;height:4px;background:#FF2244;border-radius:50%;box-shadow:0 0 8px #FF2244;"></div>
+            <div style="position:relative;width:24px;height:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+              <div style="position:absolute;width:24px;height:24px;border-radius:50%;background:${color}20;border:1px solid ${color}80;"></div>
+              <div style="width:7px;height:7px;border-radius:50%;background:${color};z-index:10;"></div>
             </div>
           `,
           iconSize: [24, 24],
           iconAnchor: [12, 12]
         });
 
+        const marker = L.marker([news.lat, news.lng], { icon });
+        const sourceBranding = news.logo ? `<img src="${news.logo}" style="height:12px;width:auto;object-fit:contain;margin-right:6px;" />` : `<div style="width:6px;height:6px;border-radius:50%;background:${color};margin-right:6px;"></div>`;
+
+        marker.bindPopup(`
+          <div style="background:#0F1626;border:1px solid rgba(255,255,255,0.14);border-radius:8px;padding:12px;min-width:260px;color:#F1F5F9;font-family:Inter,sans-serif;box-shadow:0 8px 24px rgba(0,0,0,0.6);">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.08);padding-bottom:6px;">
+              <div style="display:flex;align-items:center;">
+                ${sourceBranding}
+                <strong style="font-size:9.5px;color:${color};letter-spacing:0.5px;text-transform:uppercase;font-weight:600;">${news.source}</strong>
+              </div>
+              <span style="color:#94A3B8;font-size:8.5px;font-family:monospace;">${new Date(news.publishedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            </div>
+            <h4 style="font-size:12px;font-weight:600;color:#F8FAFC;margin-bottom:6px;line-height:1.35;">${news.title}</h4>
+            <p style="font-size:10px;color:#94A3B8;line-height:1.45;margin-bottom:10px;">${news.description || ""}</p>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:9.5px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.06);">
+              <span style="color:#38BDF8;font-weight:500;">📍 ${news.country || "Global"}</span>
+              ${news.url && news.url !== '#' ? `<a href="${news.url}" target="_blank" rel="noopener noreferrer" style="color:#94A3B8;text-decoration:underline;">Source Article ↗</a>` : ''}
+            </div>
+          </div>
+        `, { className: "nexusintel-popup" });
+
+        marker.bindTooltip(`
+          <div style="max-width:220px;white-space:normal;line-height:1.35;">
+            <div style="font-size:10.5px;font-weight:600;color:#F8FAFC;">${news.title}</div>
+            <div style="font-size:9px;color:${color};margin-top:3px;font-weight:600;text-transform:uppercase;">${news.source} • ${news.country || "Global"}</div>
+          </div>
+        `, { className: "nexusintel-tooltip", direction: "top", offset: [0, -10] });
+
+        nexusGroup.addLayer(marker);
+      });
+
+      // 2. Conflict Markers
+      conflictMarkers.forEach((event) => {
+        const icon = L.divIcon({
+          className: "",
+          html: `
+            <div style="position:relative;width:20px;height:20px;display:flex;align-items:center;justify-content:center;">
+              <div style="position:absolute;inset:0;border:1.5px solid #EF4444;border-radius:50%;opacity:0.6;"></div>
+              <div style="width:5px;height:5px;background:#EF4444;border-radius:50%;"></div>
+            </div>
+          `,
+          iconSize: [20, 20],
+          iconAnchor: [10, 10]
+        });
+
         const marker = L.marker([event.lat, event.lng], { icon });
         marker.bindPopup(`
-          <div style="background:rgba(20,5,5,0.95);border:1px solid #FF2244;border-radius:8px;padding:12px;min-width:240px;color:#FFE;font-family:Inter,sans-serif;">
-            <div style="font-family:Orbitron;font-size:9px;color:#FF2244;text-transform:uppercase;margin-bottom:6px;letter-spacing:1px;">
-              ⚠️ CONFLICT EVENT: ${event.type}
+          <div style="background:#0F1626;border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:12px;min-width:240px;color:#F1F5F9;font-family:Inter,sans-serif;">
+            <div style="font-size:9.5px;font-weight:600;color:#F87171;text-transform:uppercase;margin-bottom:6px;letter-spacing:0.5px;">
+              CRITICAL SECURITY INCIDENT: ${event.type}
             </div>
-            <div style="font-size:11px;font-weight:bold;margin-bottom:8px;">${event.description}</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:9px;color:#A11;border-top:1px solid rgba(255,0,0,0.1);padding-top:8px;">
-              <div>ACTOR: <span style="font-weight:bold;">${event.actor1}</span></div>
-              <div>FATALITIES: <span style="font-weight:bold;">${event.fatalities}</span></div>
-              <div>LOC: <span style="font-weight:bold;">${event.location}</span></div>
-              <div>SRC: <span style="font-weight:bold;">${event.source}</span></div>
+            <div style="font-size:11.5px;font-weight:600;margin-bottom:8px;color:#F1F5F9;line-height:1.35;">${event.description}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:9.5px;color:#94A3B8;border-top:1px solid rgba(255,255,255,0.08);padding-top:6px;">
+              <div>Party: <span style="font-weight:600;color:#E2E8F0;">${event.actor1}</span></div>
+              <div>Casualties: <span style="font-weight:600;color:#F87171;">${event.fatalities}</span></div>
+              <div>Sector: <span style="font-weight:600;color:#E2E8F0;">${event.location}</span></div>
+              <div>Source: <span style="font-weight:600;color:#E2E8F0;">${event.source}</span></div>
             </div>
           </div>
         `);
+
+        marker.bindTooltip(`
+          <div style="max-width:220px;white-space:normal;line-height:1.35;">
+            <div style="font-size:10.5px;font-weight:700;color:#F87171;text-transform:uppercase;">INCIDENT: ${event.type}</div>
+            <div style="font-size:9.5px;color:#F1F5F9;margin-top:2px;">${event.location || event.description}</div>
+            <div style="font-size:8.5px;color:#94A3B8;margin-top:2px;">Fatalities: <span style="color:#F87171;font-weight:600;">${event.fatalities}</span></div>
+          </div>
+        `, { className: "nexusintel-tooltip", direction: "top", offset: [0, -10] });
+
         nexusGroup.addLayer(marker);
       });
 
@@ -262,14 +316,14 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
 
       const shipLayer = L.layerGroup();
       liveShips.forEach((ship) => {
-        const color = ship.color || "#00FFCC";
+        const color = ship.color || "#38BDF8";
         
         const icon = L.divIcon({
           className: "",
           html: `
-            <div style="transform: rotate(${ship.heading}deg); width: 14px; height: 18px; position: relative; filter: drop-shadow(0 0 2px ${color});">
+            <div style="transform: rotate(${ship.heading}deg); width: 14px; height: 18px; position: relative;">
               <svg viewBox="0 0 14 18" style="width: 100%; height: 100%; overflow: visible;">
-                <path d="M7 0 L14 18 L7 14 L0 18 Z" fill="white" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" />
+                <path d="M7 0 L14 18 L7 14 L0 18 Z" fill="#0F1626" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" />
               </svg>
             </div>
           `,
@@ -280,9 +334,9 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
 
         const marker = L.marker([ship.lat, ship.lng], { icon });
         marker.bindTooltip(`
-          <strong style="color:${color};font-family:Orbitron;font-size:11px">${ship.name}</strong><br/>
-          <span style="font-size:9px;color:#94A3B8">Type: ${ship.type} | SPD: ${ship.speed}</span><br/>
-          <span style="font-size:8px;color:#64748B">HDG: ${ship.heading}°</span>
+          <strong style="color:${color};font-size:10px;font-family:Inter,sans-serif;font-weight:600;">${ship.name}</strong><br/>
+          <span style="font-size:8.5px;color:#94A3B8">Type: ${ship.type} | Speed: ${ship.speed}</span><br/>
+          <span style="font-size:8.5px;color:#64748B">Course: ${ship.heading}°</span>
         `, { className: "nexusintel-tooltip" });
 
         shipLayer.addLayer(marker);
@@ -383,90 +437,85 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
       if (tileLayerRef.current) mapRef.current.removeLayer(tileLayerRef.current);
       if (satLabelLayerRef.current) mapRef.current.removeLayer(satLabelLayerRef.current);
 
-      const newTile = L.tileLayer(TILE_LAYERS[key].url, {
-        attribution: TILE_LAYERS[key].attribution,
-        maxZoom: 18,
+      const cfg = TILE_LAYERS[key];
+      const newTile = L.tileLayer(cfg.url, {
+        attribution: cfg.attribution,
+        maxZoom: cfg.maxZoom || 18,
       }).addTo(mapRef.current);
       tileLayerRef.current = newTile;
 
-      if (key === "satellite") {
-        const labelTile = L.tileLayer(
-          "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
-          { opacity: 0.7 }
-        ).addTo(mapRef.current);
+      if (cfg.labelsUrl) {
+        const labelTile = L.tileLayer(cfg.labelsUrl, {
+          opacity: 0.85,
+          zIndex: 4,
+          maxZoom: cfg.maxZoom || 18,
+        }).addTo(mapRef.current);
         satLabelLayerRef.current = labelTile;
       }
     });
   };
 
   return (
-    <div className="glass-panel flex flex-col overflow-hidden h-full relative">
+    <div className="bg-[var(--panel)] border border-[var(--border)] rounded-lg flex flex-col overflow-hidden h-full relative shadow-sm transition-colors duration-200">
       {/* Controls row top */}
-      <div className="flex flex-col border-b border-white/5 shrink-0 z-10 relative bg-black/40 backdrop-blur-md">
+      <div className="flex flex-col border-b border-[var(--border)] shrink-0 z-10 relative bg-[var(--panel-card)] backdrop-blur-md">
         
         {/* Top Header & Base Maps */}
-        <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/5">
-          <div className="section-header mb-0 flex items-center gap-3" style={{ margin: 0, border: "none", padding: 0 }}>
-            <div className="flex items-center">
-              <span className="animate-blink text-neon-blue mr-1">●</span> 
-              <span>Real-Time Global Intel Map</span>
+        <div className="flex items-center justify-between px-3 py-2 border-b border-[var(--border)]">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-emerald-400" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-primary)]">
+                Global Geospatial Monitor
+              </span>
               {currentMode !== "Standard" && (
-                <span className="ml-3 px-1.5 py-0.5 rounded-sm bg-neon-green/10 border border-neon-green/30 text-[8px] text-neon-green uppercase font-bold tracking-widest animate-pulse">
-                  {currentMode} ACTIVE
+                <span className="ml-2 px-1.5 py-0.5 rounded bg-sky-500/10 border border-sky-500/30 text-[8.5px] text-sky-400 uppercase font-medium">
+                  {currentMode} Active
                 </span>
               )}
             </div>
             
             {onToggleMaximize && (
-              <div className="flex gap-2">
+              <div className="flex items-center gap-1.5 ml-2">
                 <button
                   onClick={() => setRefreshKey(prev => prev + 1)}
-                  className="bg-neon-blue/20 hover:bg-neon-blue/30 text-neon-blue text-[8px] font-bold px-2 py-1 rounded border border-neon-blue/40 flex items-center gap-1 transition-all"
-                  title="Force Reload Map Nodes & Layers"
+                  className="bg-[var(--panel)] hover:bg-[var(--panel-hover)] text-[var(--text-secondary)] text-[9px] font-medium px-2 py-1 rounded border border-[var(--border)] flex items-center gap-1 transition-colors"
+                  title="Reload Nodes & Layers"
                 >
                   <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-                  RELOAD INTEL
+                  Sync Nodes
                 </button>
                 <button
                   onClick={() => {
                     if (mapRef.current) mapRef.current.setView([25, 18], 3);
                   }}
-                  className="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-[8px] font-bold px-2 py-1 rounded border border-cyan-500/30 flex items-center gap-1 transition-all"
+                  className="bg-[var(--panel)] hover:bg-[var(--panel-hover)] text-[var(--text-secondary)] text-[9px] font-medium px-2 py-1 rounded border border-[var(--border)] flex items-center gap-1 transition-colors"
                   title="Reset Map View"
                 >
-                  🎯 RE-CENTER
+                  Center View
                 </button>
                 <button
                   onClick={onToggleMaximize}
-                  className="bg-white/10 hover:bg-white/20 text-white text-[8px] font-bold px-2 py-1 rounded border border-white/20 flex items-center gap-1 transition-all"
+                  className="bg-[var(--panel)] hover:bg-[var(--panel-hover)] text-[var(--text-primary)] text-[9px] font-medium px-2 py-1 rounded border border-[var(--border)] flex items-center gap-1 transition-colors"
                   title={isMaximized ? "Restore Default View" : "Maximize Map"}
                 >
-                  {isMaximized ? (
-                    <>
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
-                      RESTORE
-                    </>
-                  ) : (
-                    <>
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-                      MAXIMIZE
-                    </>
-                  )}
+                  {isMaximized ? "Restore" : "Fullscreen"}
                 </button>
               </div>
             )}
           </div>
-          <div className="flex rounded overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
+
+          {/* Base Layer Switcher */}
+          <div className="flex rounded-md overflow-hidden bg-[var(--panel-card)] border border-[var(--border)] p-0.5">
             {(Object.entries(TILE_LAYERS) as [keyof typeof TILE_LAYERS, typeof TILE_LAYERS[keyof typeof TILE_LAYERS]][]).map(([key, val]) => (
               <button
                 key={key}
                 onClick={() => switchLayer(key)}
-                className="text-[7px] px-2 py-1 font-bold uppercase tracking-wider transition-all"
-                style={{
-                  background: activeLayer === key ? "rgba(0,212,255,0.15)" : "transparent",
-                  color: activeLayer === key ? "#00D4FF" : "#94A3B8",
-                  borderRight: key !== "hybrid" ? "1px solid rgba(255,255,255,0.08)" : "none",
-                }}
+                className={`text-[8.5px] px-2.5 py-1 rounded font-medium transition-all ${
+                  activeLayer === key
+                    ? "bg-sky-500/15 text-sky-400 font-semibold border border-sky-500/30 shadow-sm"
+                    : "text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                }`}
               >
                 {val.label}
               </button>
@@ -475,49 +524,45 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
         </div>
 
         {/* Filters & Modes */}
-        <div className="flex items-center justify-between px-3 py-1.5">
+        <div className="flex items-center justify-between px-3 py-1.5 bg-[var(--panel-card)]">
           {/* News Markers Filter */}
           <div className="flex items-center gap-2">
-            <span className="text-[7.5px] text-white/50 font-bold uppercase tracking-widest">News Node Filter:</span>
+            <span className="text-[9px] text-[var(--text-secondary)] font-medium uppercase tracking-wider">Node Filter:</span>
             <div className="relative">
               <select
                 value={activeFilter}
                 onChange={(e) => setActiveFilter(e.target.value)}
-                className="appearance-none bg-black/60 text-[#00D4FF] text-[8.5px] font-bold uppercase tracking-wider border border-white/10 rounded px-2.5 py-1 pr-7 cursor-pointer outline-none hover:border-[#00D4FF]/50 focus:border-[#00D4FF] transition-all"
-                style={{ boxShadow: '0 0 10px rgba(0,212,255,0.05)' }}
+                className="appearance-none bg-[var(--panel)] text-[var(--text-primary)] text-[9.5px] font-medium border border-[var(--border)] rounded px-2.5 py-1 pr-6 cursor-pointer outline-none hover:border-sky-500/50 focus:border-sky-500 transition-colors"
               >
-                {filterOptions.map((f) => {
-                  return (
-                    <option key={f} value={f} className="bg-[#0B101A] text-white py-1">
-                      {f}
-                    </option>
-                  );
-                })}
+                {filterOptions.map((f) => (
+                  <option key={f} value={f} className="bg-[var(--panel)] text-[var(--text-primary)] py-1">
+                    {f}
+                  </option>
+                ))}
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-[#00D4FF]">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-[var(--text-secondary)]">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
               </div>
             </div>
           </div>
 
           {/* Map Modes */}
           <div className="flex items-center gap-2">
-            <span className="text-[7.5px] text-white/50 font-bold uppercase tracking-widest">Map Layer Mode:</span>
+            <span className="text-[9px] text-[var(--text-secondary)] font-medium uppercase tracking-wider">Sensor Overlay:</span>
             <div className="relative">
               <select
                 value={currentMode}
                 onChange={(e) => setCurrentMode(e.target.value)}
-                className="appearance-none bg-black/60 text-[#8B5CF6] text-[8.5px] font-bold uppercase tracking-wider border border-white/10 rounded px-2.5 py-1 pr-7 cursor-pointer outline-none hover:border-[#8B5CF6]/50 focus:border-[#8B5CF6] transition-all"
-                style={{ boxShadow: '0 0 10px rgba(139,92,246,0.05)' }}
+                className="appearance-none bg-[var(--panel)] text-[var(--text-primary)] text-[9.5px] font-medium border border-[var(--border)] rounded px-2.5 py-1 pr-6 cursor-pointer outline-none hover:border-sky-500/50 focus:border-sky-500 transition-colors"
               >
                 {mapModes.map((m) => (
-                  <option key={m} value={m} className="bg-[#0B101A] text-white py-1">
+                  <option key={m} value={m} className="bg-[var(--panel)] text-[var(--text-primary)] py-1">
                     {m}
                   </option>
                 ))}
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-[#8B5CF6]">
-                <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-[var(--text-secondary)]">
+                <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
               </div>
             </div>
           </div>
@@ -526,21 +571,21 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
 
       {/* Map container */}
       <div className="flex-1 relative overflow-hidden">
-        <div id="nexusintel-map" style={{ width: "100%", height: "100%", background: "#050C1A", pointerEvents: "auto" }} />
+        <div id="nexusintel-map" style={{ width: "100%", height: "100%", background: "var(--map-bg)", pointerEvents: "auto" }} />
         
         {/* Legend */}
-        <div className="absolute bottom-4 left-2 z-20 glass-panel p-2 text-[8px] space-y-1 pointer-events-none">
-          <div className="text-text-secondary font-bold uppercase tracking-wider mb-1">Node Intel Legend</div>
+        <div className="absolute bottom-3 left-3 z-20 bg-[var(--panel)] border border-[var(--border)] rounded-md p-2.5 text-[8.5px] space-y-1 pointer-events-none shadow-md backdrop-blur-sm transition-colors">
+          <div className="text-[var(--text-secondary)] font-semibold uppercase tracking-wider mb-1">Signal Classification</div>
           {[
-            { dot: "#FF2244", label: "War / Assault / Critical" },
-            { dot: "#FF8C00", label: "Domestic Riots / Terror" },
-            { dot: "#FFD700", label: "Upcoming Floods / Risk" },
-            { dot: "#00FF88", label: "Global Peace / Treaties" },
-            { dot: "#00D4FF", label: "National Biz / Infrastructure" },
+            { dot: "#EF4444", label: "Active Hostilities / Conflicts" },
+            { dot: "#F59E0B", label: "Security & Civil Alerts" },
+            { dot: "#EAB308", label: "Upcoming Risk Advisories" },
+            { dot: "#10B981", label: "Bilateral Accords & Peace" },
+            { dot: "#38BDF8", label: "Strategic & Commercial Infrastructure" },
           ].map((l) => (
             <div key={l.label} className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: l.dot, boxShadow: `0 0 4px ${l.dot}` }} />
-              <span className="text-text-secondary">{l.label}</span>
+              <span className="w-2 h-2 rounded-full shrink-0" style={{ backgroundColor: l.dot }} />
+              <span className="text-[var(--text-primary)]">{l.label}</span>
             </div>
           ))}
         </div>
@@ -576,29 +621,32 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
         }
 
         #nexusintel-map .leaflet-control-zoom {
-          border: 1px solid rgba(0,212,255,0.25) !important;
-          background: rgba(15,22,40,0.85) !important;
+          border: 1px solid rgba(255,255,255,0.12) !important;
+          background: rgba(15,22,38,0.95) !important;
           border-radius: 6px !important;
           backdrop-filter: blur(8px);
+          overflow: hidden;
         }
         #nexusintel-map .leaflet-control-zoom a {
-          color: #00D4FF !important;
+          color: #94A3B8 !important;
           background: transparent !important;
-          border-color: rgba(0,212,255,0.2) !important;
-          font-size: 16px !important;
+          border-color: rgba(255,255,255,0.1) !important;
+          font-size: 14px !important;
+          transition: all 0.2s;
         }
         #nexusintel-map .leaflet-control-zoom a:hover {
-          background: rgba(0,212,255,0.1) !important;
+          color: #F1F5F9 !important;
+          background: rgba(255,255,255,0.08) !important;
         }
 
         #nexusintel-map .leaflet-control-attribution {
-          background: rgba(11,15,25,0.7) !important;
-          color: #475569 !important;
-          font-size: 7px !important;
+          background: rgba(8,12,20,0.85) !important;
+          color: #64748B !important;
+          font-size: 8px !important;
           backdrop-filter: blur(4px);
         }
         #nexusintel-map .leaflet-control-attribution a {
-          color: #00D4FF !important;
+          color: #94A3B8 !important;
         }
 
         .nexusintel-popup .leaflet-popup-content-wrapper {
@@ -614,22 +662,21 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
           display: none !important;
         }
         .nexusintel-popup .leaflet-popup-close-button {
-          color: #00D4FF !important;
-          top: 6px !important;
+          color: #94A3B8 !important;
+          top: 8px !important;
           right: 10px !important;
-          font-size: 16px !important;
+          font-size: 15px !important;
+        }
+        .nexusintel-popup .leaflet-popup-close-button:hover {
+          color: #F1F5F9 !important;
         }
         
         /* Custom select styling for map filters */
         select option {
-          background: #0B101A;
-          color: #E2E8F0;
-          font-weight: 600;
+          background: #0F1626;
+          color: #F1F5F9;
+          font-weight: 500;
           padding: 8px;
-        }
-        select option:hover, select option:checked {
-          background: rgba(0,212,255,0.15) !important;
-          color: #00D4FF !important;
         }
       `}</style>
     </div>

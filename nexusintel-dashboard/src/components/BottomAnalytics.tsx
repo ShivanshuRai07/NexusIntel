@@ -1,8 +1,8 @@
 "use client";
 import { useEffect, useRef } from "react";
 
-// Donut Chart
-function DonutChart({ segments }: { segments: { label: string; value: number; color: string }[] }) {
+// Clean High-DPR Donut Chart
+function CrispDonutChart({ segments }: { segments: { label: string; value: number; color: string }[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -10,12 +10,18 @@ function DonutChart({ segments }: { segments: { label: string; value: number; co
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
     if (!ctx) return;
-    const W = canvas.width;
-    const H = canvas.height;
+
+    const dpr = window.devicePixelRatio || 1;
+    const rect = canvas.getBoundingClientRect();
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    ctx.scale(dpr, dpr);
+
+    const W = rect.width, H = rect.height;
     const cx = W / 2, cy = H / 2;
-    const R = Math.min(W, H) / 2 - 4;
-    const r = R * 0.55;
-    const total = segments.reduce((s, x) => s + x.value, 0);
+    const R = Math.min(W, H) / 2 - 2;
+    const r = R * 0.65;
+    const total = segments.reduce((s, x) => s + x.value, 0) || 1;
     let angle = -Math.PI / 2;
 
     ctx.clearRect(0, 0, W, H);
@@ -25,198 +31,175 @@ function DonutChart({ segments }: { segments: { label: string; value: number; co
       ctx.moveTo(cx, cy);
       ctx.arc(cx, cy, R, angle, angle + span);
       ctx.closePath();
-      ctx.fillStyle = seg.color + "CC";
-      ctx.shadowColor = seg.color;
-      ctx.shadowBlur = 6;
+      ctx.fillStyle = seg.color;
       ctx.fill();
 
-      // Inner donut hole
+      // Donut inner hole
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.fillStyle = "#0B0F19";
-      ctx.shadowBlur = 0;
+      const isLight = document.documentElement.classList.contains("light");
+      ctx.fillStyle = isLight ? "#FFFFFF" : "#0D1424";
       ctx.fill();
 
       angle += span;
     });
 
-    // Center text
-    ctx.fillStyle = "#E2E8F0";
-    ctx.font = `bold 10px 'Orbitron', sans-serif`;
+    // Clean center typography
+    const isLight = document.documentElement.classList.contains("light");
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
-    ctx.fillStyle = "#00D4FF";
-    ctx.fillText("RISK", cx, cy - 4);
-    ctx.font = `7px 'Inter', sans-serif`;
-    ctx.fillStyle = "#94A3B8";
-    ctx.fillText("INDEX", cx, cy + 6);
+    ctx.font = `600 10px 'Inter', sans-serif`;
+    ctx.fillStyle = isLight ? "#0F172A" : "#F1F5F9";
+    ctx.fillText("RISK", cx, cy - 5);
+    ctx.font = `500 8px 'JetBrains Mono', monospace`;
+    ctx.fillStyle = isLight ? "#64748B" : "#94A3B8";
+    ctx.fillText("DISTRIB", cx, cy + 6);
   }, [segments]);
 
-  return <canvas ref={canvasRef} width={100} height={100} className="w-full h-full" />;
+  return <canvas ref={canvasRef} className="w-full h-full block" />;
 }
 
-// Horizontal bar
-function HBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
+// Clean Horizontal Bar
+function CrispProgressBar({ label, value, max, color, sublabel }: { label: string; value: number; max: number; color: string; sublabel?: string }) {
   return (
-    <div className="flex items-center gap-2">
-      <span className="text-[8px] text-text-secondary w-28 shrink-0">{label}</span>
-      <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
+    <div className="flex flex-col gap-1">
+      <div className="flex items-center justify-between text-[10.5px]">
+        <span className="text-[var(--text-primary)] font-medium">{label}</span>
+        <div className="flex items-center gap-1.5 font-mono">
+          <span className="font-semibold text-[var(--text-primary)]">{value}</span>
+          {sublabel && <span className="text-[9px] text-[var(--text-muted)] font-normal">{sublabel}</span>}
+        </div>
+      </div>
+      <div className="w-full h-1.5 bg-slate-700/30 rounded-full overflow-hidden">
         <div
-          className="h-full rounded-full transition-all duration-1000"
+          className="h-full rounded-full transition-all duration-300"
           style={{
-            width: `${(value / max) * 100}%`,
-            background: `linear-gradient(90deg, ${color}88, ${color})`,
-            boxShadow: `0 0 6px ${color}`,
+            width: `${Math.min(100, (value / max) * 100)}%`,
+            backgroundColor: color,
           }}
         />
       </div>
-      <span className="text-[8px] font-bold w-6 text-right" style={{ color }}>{value}</span>
     </div>
   );
 }
 
-// Line chart (Canvas)
-function MiniLineChart({ data, color }: { data: number[]; color: string }) {
-  const ref = useRef<HTMLCanvasElement>(null);
-  useEffect(() => {
-    const c = ref.current;
-    if (!c) return;
-    const ctx = c.getContext("2d");
-    if (!ctx) return;
-    const W = c.width, H = c.height;
-    ctx.clearRect(0, 0, W, H);
-    const max = Math.max(...data), min = Math.min(...data);
-    const rng = max - min || 1;
-    const pad = 4;
-    const xStep = (W - pad * 2) / (data.length - 1);
-    const pts = data.map((v, i) => ({ x: pad + i * xStep, y: H - pad - ((v - min) / rng) * (H - pad * 2) }));
-    const hex = color.replace("#", "");
-    const rv = parseInt(hex.substring(0, 2), 16), gv = parseInt(hex.substring(2, 4), 16), bv = parseInt(hex.substring(4, 6), 16);
-    const grad = ctx.createLinearGradient(0, 0, 0, H);
-    grad.addColorStop(0, `rgba(${rv},${gv},${bv},0.3)`);
-    grad.addColorStop(1, `rgba(${rv},${gv},${bv},0)`);
-    ctx.beginPath();
-    ctx.moveTo(pts[0].x, H);
-    pts.forEach(({ x, y }) => ctx.lineTo(x, y));
-    ctx.lineTo(pts[pts.length - 1].x, H);
-    ctx.fillStyle = grad;
-    ctx.fill();
-    ctx.beginPath();
-    pts.forEach(({ x, y }, i) => (i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y)));
-    ctx.strokeStyle = color;
-    ctx.lineWidth = 1.5;
-    ctx.shadowColor = color;
-    ctx.shadowBlur = 4;
-    ctx.stroke();
-  }, [data, color]);
-  return <canvas ref={ref} width={200} height={50} className="w-full h-full" />;
-}
-
 const riskSegments = [
-  { label: "Conflict", value: 35, color: "#FF2244" },
-  { label: "Economy", value: 28, color: "#FF8C00" },
-  { label: "Political Instability", value: 22, color: "#FFD700" },
-  { label: "Climate", value: 15, color: "#00FF88" },
+  { label: "Sovereign & Territorial", value: 36, color: "#EF4444" },
+  { label: "Trade & Supply Bottlenecks", value: 28, color: "#F59E0B" },
+  { label: "Energy & Infrastructure", value: 22, color: "#38BDF8" },
+  { label: "Ecological / Climate", value: 14, color: "#10B981" },
 ];
 
-const deployments = [
-  { label: "Combat Operations", value: 43, max: 100, color: "#FF2244" },
-  { label: "Peacekeeping Ops", value: 57, max: 100, color: "#00D4FF" },
-  { label: "Reserve Mobilized", value: 65, max: 100, color: "#FF8C00" },
-  { label: "Naval Operations", value: 38, max: 100, color: "#8B5CF6" },
+const chokepoints = [
+  { name: "Strait of Hormuz", status: "ELEVATED VIGILANCE", level: "amber", flow: "21.0M bpd (crude)" },
+  { name: "Bab-el-Mandeb / Red Sea", status: "ACTIVE DISRUPTIONS", level: "red", flow: "Rerouting around Cape" },
+  { name: "Strait of Malacca", status: "NORMAL TRANSIT", level: "emerald", flow: "98K vessels / yr" },
+  { name: "Panama Canal", status: "REDUCED CAPACITY", level: "amber", flow: "Draft restriction lifted" },
 ];
-
-const energyData = [180, 165, 190, 210, 195, 220, 240, 225, 210, 235, 250, 245];
-const tradeData = [280, 260, 290, 310, 300, 330, 320, 340, 360, 345, 370, 380];
 
 export default function BottomAnalytics() {
   return (
-    <div className="bottom-analytics h-full">
-      {/* Geopolitical Risk Assessment */}
-      <div className="glass-panel p-2 flex flex-col">
-        <div className="section-header">
-          <span style={{ color: "#FF2244" }}>◉</span> Geopolitical Risk Assessment
-        </div>
-        <div className="flex gap-3 flex-1">
-          <div style={{ width: "70px", height: "70px", flexShrink: 0 }}>
-            <DonutChart segments={riskSegments} />
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-2 h-full">
+
+      {/* Geopolitical Risk Distribution */}
+      <div className="bg-[var(--panel)] border border-[var(--border)] rounded-lg p-3 flex flex-col shadow-sm transition-colors">
+        <div className="flex items-center justify-between pb-2 border-b border-[var(--border)] mb-2">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-rose-500" />
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-primary)]">
+              Risk Category Breakdown
+            </h2>
           </div>
-          <div className="flex flex-col justify-center gap-1.5 flex-1">
+          <span className="text-[9px] font-mono text-[var(--text-muted)]">GLOBAL COMPOSITE</span>
+        </div>
+
+        <div className="flex items-center gap-4 flex-1">
+          <div className="w-20 h-20 shrink-0">
+            <CrispDonutChart segments={riskSegments} />
+          </div>
+          <div className="flex flex-col justify-center gap-1.5 flex-1 min-w-0">
             {riskSegments.map((s) => (
-              <div key={s.label} className="flex items-center gap-2">
-                <div className="w-2 h-2 rounded-sm shrink-0" style={{ background: s.color, boxShadow: `0 0 4px ${s.color}` }} />
-                <span className="text-[8px] text-text-secondary flex-1">{s.label}</span>
-                <span className="text-[9px] font-bold" style={{ color: s.color }}>{s.value}%</span>
+              <div key={s.label} className="flex items-center justify-between text-[10px]">
+                <div className="flex items-center gap-2 truncate">
+                  <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ backgroundColor: s.color }} />
+                  <span className="text-[var(--text-secondary)] truncate">{s.label}</span>
+                </div>
+                <span className="font-mono font-semibold text-[var(--text-primary)] shrink-0 ml-2">{s.value}%</span>
               </div>
             ))}
           </div>
         </div>
       </div>
 
-      {/* Military Deployments */}
-      <div className="glass-panel p-2 flex flex-col">
-        <div className="section-header">
-          <span style={{ color: "#FF8C00" }}>⚔</span> Military Deployments (Ongoing Ops)
+      {/* Strategic Theater Deployments */}
+      <div className="bg-[var(--panel)] border border-[var(--border)] rounded-lg p-3 flex flex-col justify-between shadow-sm transition-colors">
+        <div className="flex items-center justify-between pb-2 border-b border-[var(--border)] mb-2">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-sky-400" />
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-primary)]">
+              Active Security Theaters
+            </h2>
+          </div>
+          <span className="text-[9px] font-mono text-[var(--text-muted)]">COALITIONS</span>
         </div>
-        <div className="flex flex-col gap-2 flex-1 justify-center">
-          {deployments.map((d) => (
-            <HBar key={d.label} {...d} />
-          ))}
+
+        <div className="space-y-2 flex-1 justify-center flex flex-col">
+          <CrispProgressBar label="Maritime Task Forces" value={42} max={60} color="#38BDF8" sublabel="fleets" />
+          <CrispProgressBar label="Forward Air Patrol Wings" value={68} max={100} color="#818CF8" sublabel="squadrons" />
+          <CrispProgressBar label="Multinational Peacekeeping" value={87} max={120} color="#34D399" sublabel="k personnel" />
         </div>
-        <div className="flex gap-3 mt-2 pt-2 border-t border-white/5">
-          {[
-            { label: "Total Personnel", val: "2.4M", color: "#FF2244" },
-            { label: "Active Theaters", val: "12", color: "#FF8C00" },
-            { label: "Naval Groups", val: "8", color: "#8B5CF6" },
-          ].map((s) => (
-            <div key={s.label} className="flex-1 text-center">
-              <div className="font-orbitron text-[11px] font-bold" style={{ color: s.color }}>{s.val}</div>
-              <div className="text-[6.5px] text-text-muted">{s.label}</div>
-            </div>
-          ))}
+
+        <div className="grid grid-cols-3 gap-2 pt-2 border-t border-slate-800 text-center text-[10px]">
+          <div>
+            <div className="font-mono font-semibold text-slate-100">14</div>
+            <div className="text-[8.5px] text-slate-400">UN Missions</div>
+          </div>
+          <div>
+            <div className="font-mono font-semibold text-sky-400">9 Carrier Grps</div>
+            <div className="text-[8.5px] text-slate-400">Deployed</div>
+          </div>
+          <div>
+            <div className="font-mono font-semibold text-emerald-400">DEFCON 4</div>
+            <div className="text-[8.5px] text-slate-400">General State</div>
+          </div>
         </div>
       </div>
 
-      {/* Global Resource Impacts */}
-      <div className="glass-panel p-2 flex flex-col">
-        <div className="section-header">
-          <span style={{ color: "#00FFCC" }}>📊</span> Global Resource Impacts
-        </div>
-        <div className="flex gap-2 flex-1">
-          <div className="flex-1 flex flex-col">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[7px] text-text-secondary">Energy Prices</span>
-              <span className="text-[8px] font-bold" style={{ color: "#FF8C00" }}>+14.2%</span>
-            </div>
-            <div className="flex-1 min-h-0" style={{ height: "45px" }}>
-              <MiniLineChart data={energyData} color="#FF8C00" />
-            </div>
+      {/* Maritime Chokepoint & Route Vulnerability */}
+      <div className="bg-[#0D1424] border border-slate-800 rounded-lg p-3 flex flex-col justify-between shadow-sm">
+        <div className="flex items-center justify-between pb-2 border-b border-slate-800 mb-2">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-400" />
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-slate-200">
+              Critical Maritime Corridors
+            </h2>
           </div>
-          <div className="w-px bg-white/10" />
-          <div className="flex-1 flex flex-col">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[7px] text-text-secondary">Trade Routes</span>
-              <span className="text-[8px] font-bold" style={{ color: "#00FFCC" }}>Suez: CRITICAL</span>
-            </div>
-            <div className="flex-1 min-h-0" style={{ height: "45px" }}>
-              <MiniLineChart data={tradeData} color="#00FFCC" />
-            </div>
-          </div>
+          <span className="text-[9px] font-mono text-slate-400">AIS SURVEILLANCE</span>
         </div>
-        <div className="flex gap-2 mt-2 pt-2 border-t border-white/5">
-          {[
-            { label: "Oil ($/bbl)", val: "$94.6", color: "#FF8C00", delta: "+2.4" },
-            { label: "Gas ($/MMBtu)", val: "$8.9", color: "#FFD700", delta: "+0.7" },
-            { label: "Gold ($/oz)", val: "$2,380", color: "#00FFCC", delta: "+15" },
-          ].map((r) => (
-            <div key={r.label} className="flex-1 glass-panel p-1 text-center rounded">
-              <div className="text-[8px] font-bold" style={{ color: r.color }}>{r.val}</div>
-              <div className="text-[6.5px] text-text-muted">{r.label}</div>
-              <div className="text-[6.5px] text-neon-green">▲{r.delta}</div>
-            </div>
-          ))}
+
+        <div className="space-y-1.5 flex-1 justify-center flex flex-col">
+          {chokepoints.map((cp) => {
+            const statusColor = cp.level === "red" 
+              ? "text-rose-400 bg-rose-500/10 border-rose-500/20" 
+              : cp.level === "amber" 
+              ? "text-amber-400 bg-amber-500/10 border-amber-500/20" 
+              : "text-emerald-400 bg-emerald-500/10 border-emerald-500/20";
+
+            return (
+              <div key={cp.name} className="flex items-center justify-between p-1.5 rounded bg-slate-900/50 border border-slate-800/80">
+                <div className="min-w-0 pr-2">
+                  <div className="text-[11px] font-medium text-slate-200 truncate">{cp.name}</div>
+                  <div className="text-[8.5px] text-slate-400">{cp.flow}</div>
+                </div>
+                <span className={`text-[8px] font-mono font-semibold px-1.5 py-0.5 rounded border shrink-0 ${statusColor}`}>
+                  {cp.status}
+                </span>
+              </div>
+            );
+          })}
         </div>
       </div>
+
     </div>
   );
 }

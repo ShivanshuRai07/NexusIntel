@@ -55,7 +55,9 @@ export default function EconomySection() {
                   tick={{ fontSize: 9, fill: '#64748B' }} 
                 />
                 <Tooltip 
-                  contentStyle={{ background: '#0F172A', border: '1px solid rgba(255, 215, 0, 0.3)', borderRadius: '4px', fontSize: '10px' }}
+                  contentStyle={{ background: '#0F1626', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '6px', fontSize: '11px', color: '#F1F5F9', boxShadow: '0 8px 24px rgba(0,0,0,0.6)' }}
+                  itemStyle={{ color: '#F59E0B', fontWeight: 600, fontSize: '11px' }}
+                  labelStyle={{ color: '#F8FAFC', fontWeight: 600, marginBottom: '2px' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '9px', paddingTop: '10px' }} />
                 <Bar dataKey="trade" name="Trade Volume" fill="rgba(0, 212, 255, 0.2)" radius={[2, 2, 0, 0]} barSize={20} />

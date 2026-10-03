@@ -58,8 +58,10 @@ export default function ClimateSection() {
                   ticks={[0, 0.35, 0.7, 1.05, 1.4]}
                 />
                 <Tooltip 
-                  cursor={{ fill: 'rgba(255,255,255,0.04)' }}
-                  contentStyle={{ background: '#0F172A', border: '1px solid rgba(0, 212, 255, 0.3)', borderRadius: '4px', fontSize: '10px' }}
+                  cursor={{ fill: 'rgba(255,255,255,0.06)' }}
+                  contentStyle={{ background: '#0F1626', border: '1px solid rgba(56, 189, 248, 0.4)', borderRadius: '6px', fontSize: '11px', color: '#F1F5F9', boxShadow: '0 8px 24px rgba(0,0,0,0.6)' }}
+                  itemStyle={{ color: '#38BDF8', fontWeight: 600, fontSize: '11px' }}
+                  labelStyle={{ color: '#F8FAFC', fontWeight: 600, marginBottom: '2px' }}
                   formatter={(val: number) => [`${val}°C`, 'Temp Anomaly']}
                 />
                 <Bar dataKey="temp" radius={[3, 3, 0, 0]} barSize={22}>
@@ -91,8 +93,10 @@ export default function ClimateSection() {
                 <YAxis type="number" dataKey="count" name="Event Count" axisLine={false} tick={{fontSize: 8, fill: '#64748B'}} />
                 <ZAxis type="number" dataKey="risk" range={[50, 400]} name="Risk Level" />
                 <Tooltip 
-                  cursor={{ strokeDasharray: '3 3' }} 
-                  contentStyle={{ background: '#0F172A', border: '1px solid rgba(0, 212, 255, 0.3)', borderRadius: '4px', fontSize: '10px' }}
+                  cursor={{ strokeDasharray: '3 3', stroke: 'rgba(56, 189, 248, 0.4)' }} 
+                  contentStyle={{ background: '#0F1626', border: '1px solid rgba(56, 189, 248, 0.4)', borderRadius: '6px', fontSize: '11px', color: '#F1F5F9', boxShadow: '0 8px 24px rgba(0,0,0,0.6)' }}
+                  itemStyle={{ color: '#38BDF8', fontWeight: 600, fontSize: '11px' }}
+                  labelStyle={{ color: '#F8FAFC', fontWeight: 600, marginBottom: '2px' }}
                 />
                 <Scatter name="Disasters" data={disasterData} fill="#FF8C00" opacity={0.6} />
               </ScatterChart>

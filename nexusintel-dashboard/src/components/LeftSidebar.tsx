@@ -3,16 +3,18 @@ import { useEffect, useRef, useState } from "react";
 import DefenseModal from "./DefenseModal";
 import AllDealsModal from "./AllDealsModal";
 
-const tickerItems = [
-  "⚡ INTEL: JOINT MILITARY EXERCISES COMMENCE IN BALTIC MARITIME SECTOR",
-  "📡 SATELLITE: NEW INFRASTRUCTURE DEVELOPMENT OBSERVED NEAR STRATEGIC STRAITS",
-  "🌐 SECURITY: SUBMARINE TELECOM CABLE MAINTENANCE IN ATLANTIC COMPLETED",
-  "🛢 ECONOMY: OPEC+ SCHEDULES QUARTERLY POLICY REVIEW MEETING",
+const fallbackTicker = [
+  "STRATEGIC NOTICE: JOINT MARITIME SURVEILLANCE EXERCISE CONDUCTED IN BALTIC REGION",
+  "INFRASTRUCTURE MONITOR: STRAIT OF MALACCA COMMERCIAL VESSEL DENSITY ELEVATED",
+  "TELECOMS LOG: SUBSEA DATA BACKBONE INSPECTION IN NORTH ATLANTIC CONCLUDED",
+  "COMMODITY REPORT: GLOBAL PETROLEUM EXPORTERS CONFIRM QUARTERLY PRODUCTION QUOTAS",
 ];
 
 export default function LeftSidebar() {
   const feedRef = useRef<HTMLDivElement>(null);
-  const [scrollPos, setScrollPos] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [activeCategory, setActiveCategory] = useState("all");
   
   const [newsEvents, setNewsEvents] = useState<any[]>([]);
   const [defenseDeals, setDefenseDeals] = useState<any[]>([]);
@@ -20,167 +22,265 @@ export default function LeftSidebar() {
   const [showAllDeals, setShowAllDeals] = useState(false);
 
   useEffect(() => {
-    fetch('/api/news').then(res => res.json()).then(data => {
-      if(Array.isArray(data)) setNewsEvents(data);
-    }).catch(console.error);
+    fetch('/api/news')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setNewsEvents(data);
+      })
+      .catch(console.error);
 
-    fetch('/api/defense').then(res => res.json()).then(data => {
-      if(Array.isArray(data)) setDefenseDeals(data);
-    }).catch(console.error);
+    fetch('/api/defense')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setDefenseDeals(data);
+      })
+      .catch(console.error);
   }, []);
 
-  // Auto-scroller for news feed
-  useEffect(() => {
-    if (newsEvents.length === 0) return;
-    const interval = setInterval(() => {
-      setScrollPos(prev => {
-        const el = feedRef.current;
-        if (!el) return prev;
-        const max = el.scrollHeight / 2;
-        const next = prev + 0.3;
-        return next >= max ? 0 : next;
-      });
-    }, 30);
-    return () => clearInterval(interval);
-  }, [newsEvents]);
-
-  useEffect(() => {
-    if (feedRef.current) feedRef.current.scrollTop = scrollPos;
-  }, [scrollPos]);
-
-  const colorMap: Record<string, string> = {
-    "red": "#FF2244",
-    "green": "#00FF88",
-    "orange": "#FF8C00",
-    "yellow-orange": "#FFD700",
-    "light-blue": "#00D4FF"
-  };
-
-  const tagMap: Record<string, string> = {
-    "red": "CRITICAL",
-    "green": "POSITIVE",
-    "orange": "DOMESTIC ALERT",
-    "yellow-orange": "UPCOMING RISK",
-    "light-blue": "NATION POSITIVE"
-  };
-
   const getRelativeTime = (isoString: string) => {
-    if(!isoString) return "just now";
+    if (!isoString) return "just now";
     const diff = Math.floor((Date.now() - new Date(isoString).getTime()) / 60000);
-    if(isNaN(diff) || diff < 0) return "recently";
-    if(diff < 60) return `${diff}m ago`;
-    return `${Math.floor(diff/60)}h ago`;
+    if (isNaN(diff) || diff < 0) return "recently";
+    if (diff < 60) return `${diff}m ago`;
+    return `${Math.floor(diff / 60)}h ago`;
   };
 
-  const dynamicTicker = newsEvents.length > 0 
-    ? newsEvents.map(e => `⚡ INTEL: ${e.title.toUpperCase()}`) 
-    : tickerItems;
+  const getCategoryTheme = (colorNode: string) => {
+    switch (colorNode) {
+      case "red":
+        return {
+          label: "FLASHPOINT",
+          border: "border-l-rose-500",
+          tagBg: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+          dot: "bg-rose-500",
+        };
+      case "orange":
+        return {
+          label: "SECURITY ADVISORY",
+          border: "border-l-amber-500",
+          tagBg: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+          dot: "bg-amber-500",
+        };
+      case "green":
+        return {
+          label: "POSITIVE DEVELOPMENT",
+          border: "border-l-emerald-500",
+          tagBg: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+          dot: "bg-emerald-500",
+        };
+      case "light-blue":
+      default:
+        return {
+          label: "INTELLIGENCE UPDATE",
+          border: "border-l-sky-500",
+          tagBg: "bg-sky-500/10 text-sky-400 border-sky-500/20",
+          dot: "bg-sky-500",
+        };
+    }
+  };
+
+  const filteredNews = newsEvents.filter(e => {
+    const matchesSearch = !searchQuery || 
+      e.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (e.description && e.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
+      (e.source && e.source.toLowerCase().includes(searchQuery.toLowerCase()));
+
+    if (!matchesSearch) return false;
+
+    if (activeCategory === "critical") return e.colorNode === "red";
+    if (activeCategory === "alerts") return e.colorNode === "orange";
+    if (activeCategory === "general") return e.colorNode === "light-blue" || e.colorNode === "green";
+    return true;
+  });
+
+  const tickerList = newsEvents.length > 0 
+    ? newsEvents.slice(0, 6).map(e => `${e.source.toUpperCase()}: ${e.title}`)
+    : fallbackTicker;
 
   return (
     <>
-      <div className="flex flex-col gap-2 h-full overflow-y-auto thin-scroll relative pr-1 pb-4">
-        {/* Global Live News Feed */}
-        <div className="glass-panel p-2.5 flex flex-col shrink-0 h-[450px] relative">
-          <div className="section-header hover:bg-white/5 cursor-pointer transition-colors rounded">
-            <div className="live-dot" />
-            Global Live News Feed
+      <div className="flex flex-col gap-2 h-full overflow-y-auto thin-scroll pr-1 pb-4">
+        
+        {/* Global Live Intelligence Wire */}
+        <div className="bg-[var(--panel)] border border-[var(--border)] rounded-lg p-3 flex flex-col shrink-0 h-[460px] shadow-sm transition-colors">
+          
+          {/* Header & Controls */}
+          <div className="flex items-center justify-between pb-2 border-b border-[var(--border)]">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-sky-400" />
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-primary)]">
+                Global Wire Feed
+              </h2>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <button
+                onClick={() => setIsPaused(!isPaused)}
+                title={isPaused ? "Resume auto-scroll" : "Pause auto-scroll"}
+                className="text-[9px] px-2 py-0.5 rounded border border-slate-700 bg-slate-800/80 text-slate-300 hover:text-white transition-colors"
+              >
+                {isPaused ? "▶ Resume" : "⏸ Pause"}
+              </button>
+              <span className="text-[9px] font-mono text-slate-400 bg-slate-800/60 px-1.5 py-0.5 rounded">
+                {filteredNews.length} items
+              </span>
+            </div>
           </div>
 
-          {newsEvents.length === 0 ? (
-            <div className="flex-1 flex items-center justify-center">
-              <span className="text-[10px] text-neon-blue animate-pulse font-mono">Establishing secure link...</span>
+          {/* Search & Category Filter */}
+          <div className="mt-2 mb-2 flex flex-col gap-1.5">
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Filter bulletins..."
+                className="w-full bg-slate-900/90 border border-slate-800 rounded px-2.5 py-1 text-[11px] text-slate-200 placeholder-slate-500 focus:outline-none focus:border-slate-600 font-sans"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery("")}
+                  className="absolute right-2 top-1.5 text-slate-400 hover:text-slate-200 text-xs"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1 text-[9px]">
+              {[
+                { id: "all", label: "All" },
+                { id: "critical", label: "High Priority" },
+                { id: "alerts", label: "Advisories" },
+                { id: "general", label: "General" },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveCategory(tab.id)}
+                  className={`px-2 py-0.5 rounded transition-colors ${
+                    activeCategory === tab.id
+                      ? "bg-sky-500/15 text-sky-300 border border-sky-500/30 font-medium"
+                      : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Bulletins Scrollable Area */}
+          {filteredNews.length === 0 ? (
+            <div className="flex-1 flex flex-col items-center justify-center text-center p-4">
+              <span className="text-xs text-slate-400 mb-1">No reports matching filter</span>
+              <span className="text-[10px] text-slate-500 font-mono">Listening for live wire updates...</span>
             </div>
           ) : (
-            <div className="overflow-hidden flex-1 mask-fade" ref={feedRef} style={{ overflowY: 'hidden', position: 'relative' }}>
-              <div>
-                {[...newsEvents, ...newsEvents].map((e, i) => {
-                  const uiColor = colorMap[e.colorNode] || "#00D4FF";
-                  return (
-                    <div
-                      key={`${e.id}-${i}`}
-                      className="mb-2 p-2.5 rounded bg-black/40 border-l-2 border-white/10 hover:border-white/30 hover:bg-white/[0.06] transition-all group relative overflow-hidden"
-                      style={{ borderLeftColor: uiColor }}
-                    >
-                      <div className="flex items-center justify-between mb-1">
-                        <div className="flex items-center gap-1.5">
-                          <div className="w-1.5 h-1.5 rounded-full" style={{ background: uiColor }} />
-                          <span className="font-mono font-bold text-[8px] tracking-[1.5px]" style={{ color: uiColor }}>
-                            {e.source.toUpperCase()}
-                          </span>
-                        </div>
-                        <span className="text-[7px] text-slate-400 font-medium">{getRelativeTime(e.publishedAt)}</span>
+            <div
+              ref={feedRef}
+              className="flex-1 overflow-y-auto thin-scroll space-y-2 pr-1"
+              onMouseEnter={() => setIsPaused(true)}
+              onMouseLeave={() => setIsPaused(false)}
+            >
+              {filteredNews.map((e, i) => {
+                const theme = getCategoryTheme(e.colorNode);
+                return (
+                  <div
+                    key={`${e.id}-${i}`}
+                    className={`p-2.5 rounded-md bg-slate-900/60 border border-slate-800/80 border-l-[3px] ${theme.border} hover:bg-slate-800/50 hover:border-slate-700 transition-all group`}
+                  >
+                    <div className="flex items-center justify-between mb-1">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`w-1.5 h-1.5 rounded-full ${theme.dot}`} />
+                        <span className="font-mono text-[9px] font-semibold text-slate-300 uppercase tracking-wide">
+                          {e.source || "WIRE SERVICE"}
+                        </span>
                       </div>
+                      <span className="text-[8.5px] text-slate-400 font-mono">
+                        {getRelativeTime(e.publishedAt)}
+                      </span>
+                    </div>
 
-                      <p className="text-[10.5px] font-bold text-white leading-tight mb-1 group-hover:text-neon-blue transition-colors">
-                        {e.title}
-                      </p>
-                      <p className="text-[9px] text-slate-400 leading-normal mb-1.5 line-clamp-2">
+                    <p className="text-[11px] font-semibold text-slate-100 group-hover:text-sky-300 transition-colors leading-snug mb-1">
+                      {e.title}
+                    </p>
+
+                    {e.description && (
+                      <p className="text-[10px] text-slate-400 leading-relaxed mb-2 line-clamp-2">
                         {e.description}
                       </p>
+                    )}
 
-                      <div className="flex justify-between items-center pt-1 border-t border-white/5">
-                        <span className="status-badge text-[6px] py-0.5 px-1.5" style={{ color: uiColor, background: `${uiColor}15`, border: `1px solid ${uiColor}30` }}>
-                          {tagMap[e.colorNode] || "INTEL UPDATE"}
-                        </span>
-                        <a 
-                          href={e.url} 
-                          target="_blank" 
+                    <div className="flex items-center justify-between pt-1 border-t border-slate-800/60">
+                      <span className={`text-[8.5px] font-medium px-1.5 py-0.5 rounded border ${theme.tagBg}`}>
+                        {theme.label}
+                      </span>
+                      {e.url && e.url !== "#" && (
+                        <a
+                          href={e.url}
+                          target="_blank"
                           rel="noopener noreferrer"
-                          className="text-[7px] font-bold text-neon-blue hover:text-white flex items-center gap-1 uppercase tracking-widest bg-neon-blue/10 px-1.5 py-0.5 rounded border border-neon-blue/20 transition-all"
+                          className="text-[8.5px] text-slate-400 hover:text-sky-400 flex items-center gap-1 font-mono transition-colors"
                         >
-                          Source [↗]
+                          Dispatch Link ↗
                         </a>
-                      </div>
+                      )}
                     </div>
-                  );
-                })}
-              </div>
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
 
-        {/* Live Defense Deals */}
-        <div className="glass-panel p-2.5 flex flex-col shrink-0 h-[400px]">
-          <div className="section-header flex items-center justify-between">
-            <div>
-              <span className="text-neon-orange">⚔</span> Defense News & Strategic Deals
+        {/* Defense Procurement & Strategic Contracts */}
+        <div className="bg-[var(--panel)] border border-[var(--border)] rounded-lg p-3 flex flex-col shrink-0 h-[380px] shadow-sm transition-colors">
+          <div className="flex items-center justify-between pb-2 border-b border-[var(--border)] mb-2">
+            <div className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-amber-400" />
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-[var(--text-primary)]">
+                Defense Procurement
+              </h2>
             </div>
-            <button 
+            <button
               onClick={() => setShowAllDeals(true)}
-              className="text-[9px] font-bold text-neon-orange uppercase tracking-widest hover:text-white transition-colors"
+              className="text-[9px] font-medium text-slate-400 hover:text-sky-400 transition-colors"
             >
-              See All →
+              View Full Register →
             </button>
           </div>
-          
+
           {defenseDeals.length === 0 ? (
             <div className="flex-1 flex items-center justify-center">
-              <span className="text-[10px] text-neon-orange animate-pulse font-mono">Decrypting defense logs...</span>
+              <span className="text-xs text-slate-400 font-mono">Loading procurement records...</span>
             </div>
           ) : (
             <div className="flex-1 overflow-y-auto thin-scroll space-y-1.5 pr-1">
               {defenseDeals.map((deal) => (
-                <div 
-                  key={deal.id} 
-                  className="bg-black/30 border border-white/10 rounded p-2 cursor-pointer hover:border-neon-orange/40 hover:bg-neon-orange/5 transition-all group"
+                <div
+                  key={deal.id}
                   onClick={() => setSelectedDeal(deal)}
+                  className="p-2 rounded bg-slate-900/60 border border-slate-800/80 hover:border-slate-700 hover:bg-slate-800/50 cursor-pointer transition-all group"
                 >
-                  <div className="flex justify-between items-center mb-1">
-                    <div className="flex items-center gap-1.5 text-[8px] text-slate-400 uppercase tracking-widest">
-                      <span>{deal.country1}</span>
-                      <span>→</span>
-                      <span>{deal.country2}</span>
-                    </div>
-                    <span className="text-[8px] text-slate-400">{getRelativeTime(deal.date)}</span>
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[9px] font-mono text-slate-400 uppercase tracking-wide">
+                      {deal.country1} → {deal.country2}
+                    </span>
+                    <span className="text-[8.5px] text-slate-500 font-mono">
+                      {getRelativeTime(deal.date)}
+                    </span>
                   </div>
-                  <div className="text-[9.5px] font-bold text-white group-hover:text-neon-orange transition-colors leading-snug">
+
+                  <p className="text-[10.5px] font-medium text-slate-200 group-hover:text-amber-300 transition-colors leading-snug mb-1.5">
                     {deal.title}
-                  </div>
-                  <div className="flex justify-between items-center mt-1.5 pt-1 border-t border-white/5">
-                    <span className="text-[7px] text-neon-blue px-1 py-0.5 rounded bg-neon-blue/10 border border-neon-blue/20">
+                  </p>
+
+                  <div className="flex items-center justify-between pt-1 border-t border-slate-800/60">
+                    <span className="text-[8px] text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded border border-slate-700">
                       {deal.category}
                     </span>
-                    <span className="font-mono text-[9px] font-bold text-neon-green">{deal.value}</span>
+                    <span className="font-mono text-[9.5px] font-semibold text-emerald-400">
+                      {deal.value}
+                    </span>
                   </div>
                 </div>
               ))}
@@ -188,19 +288,24 @@ export default function LeftSidebar() {
           )}
         </div>
 
-        {/* Dynamic News Ticker */}
-        <div className="glass-panel-red p-1.5 overflow-hidden shrink-0">
+        {/* Global Intelligence Ticker Banner */}
+        <div className="bg-[#0B101D] border border-slate-800 rounded-lg p-2 overflow-hidden shrink-0">
           <div className="flex items-center gap-2">
-            <span className="text-[8px] font-bold text-red-400 shrink-0 animate-blink font-mono">INTEL WIRE</span>
+            <span className="text-[9px] font-semibold font-mono text-slate-400 bg-slate-800 px-1.5 py-0.5 rounded shrink-0">
+              WIRE PULSE
+            </span>
             <div className="overflow-hidden flex-1">
               <div className="flex gap-8 animate-ticker whitespace-nowrap" style={{ width: "max-content" }}>
-                {[...dynamicTicker, ...dynamicTicker].map((item, i) => (
-                  <span key={i} className="text-[8px] text-slate-300 shrink-0 font-medium">{item}</span>
+                {[...tickerList, ...tickerList].map((item, i) => (
+                  <span key={i} className="text-[9px] text-slate-300 shrink-0 font-medium">
+                    {item}
+                  </span>
                 ))}
               </div>
             </div>
           </div>
         </div>
+
       </div>
 
       {selectedDeal && (
@@ -208,7 +313,11 @@ export default function LeftSidebar() {
       )}
 
       {showAllDeals && (
-        <AllDealsModal deals={defenseDeals} onClose={() => setShowAllDeals(false)} onSelectDeal={(d: any) => setSelectedDeal(d)} />
+        <AllDealsModal
+          deals={defenseDeals}
+          onClose={() => setShowAllDeals(false)}
+          onSelectDeal={(d: any) => setSelectedDeal(d)}
+        />
       )}
     </>
   );

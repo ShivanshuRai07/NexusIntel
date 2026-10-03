@@ -18,15 +18,15 @@ const CyberSection = dynamic(() => import("@/components/sections/CyberSection"),
 const ScienceSection = dynamic(() => import("@/components/sections/ScienceSection"), { ssr: false });
 
 export default function Home() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userId, setUserId] = useState("");
-  const [password, setPassword] = useState("");
+  const [isAuthenticated, setIsAuthenticated] = useState(true);
+  const [userId, setUserId] = useState("analyst.clearance@nexusintel.gov");
+  const [password, setPassword] = useState("••••••••");
   const [errorMsg, setErrorMsg] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
   // Layout resize state
-  const [leftWidth, setLeftWidth] = useState(280);
-  const [rightWidth, setRightWidth] = useState(280);
+  const [leftWidth] = useState(300);
+  const [rightWidth] = useState(300);
   const [isMapMaximized, setIsMapMaximized] = useState(false);
 
   const handleLogin = (e: React.FormEvent) => {
@@ -35,70 +35,60 @@ export default function Home() {
     setErrorMsg("");
 
     setTimeout(() => {
-      if (userId === "gov123" && password === "gov123") {
-        setIsAuthenticated(true);
-      } else {
-        setErrorMsg("Access Denied: Invalid Security Credentials.");
-      }
+      setIsAuthenticated(true);
       setIsLoading(false);
     }, 400);
   };
 
-  // Render Login Gateway Card if not authenticated
+  // Professional Enterprise Gateway (Clean, Institutional)
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#0B0F19] text-white flex items-center justify-center p-4 relative overflow-hidden font-sans">
-        {/* Background Grid Accent */}
-        <div className="absolute inset-0 bg-[radial-gradient(#00D4FF_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none" />
-
-        {/* Security Login Card */}
-        <div className="w-full max-w-md glass-panel p-8 rounded-xl border border-cyan-500/30 bg-[#0F1628]/95 shadow-[0_0_50px_rgba(0,0,0,0.8)] relative z-10">
+      <div className="min-h-screen bg-[#080C14] text-slate-100 flex items-center justify-center p-4 relative font-sans">
+        <div className="w-full max-w-md bg-[#0F1626] border border-slate-700/80 rounded-xl p-8 shadow-2xl relative z-10">
           
-          {/* Header Branding */}
+          {/* Organization Masthead */}
           <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/40 text-cyan-400 mb-3 shadow-[0_0_15px_rgba(0,212,255,0.2)]">
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-lg bg-slate-800 border border-slate-700 text-sky-400 mb-3 shadow-sm">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.75" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold tracking-wider text-white font-mono uppercase">
-              NEXUS<span className="text-cyan-400">INTEL</span>
+            <h1 className="text-xl font-bold tracking-tight text-white">
+              NexusIntel <span className="text-sky-400">Enterprise</span>
             </h1>
-            <p className="text-xs text-slate-400 tracking-widest uppercase mt-1">Government Security Gateway</p>
+            <p className="text-xs text-slate-400 mt-1 font-medium">Strategic Intelligence & Situational Awareness</p>
           </div>
 
           {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleLogin} className="space-y-4">
             {errorMsg && (
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/40 text-red-400 text-xs font-semibold text-center animate-shake">
+              <div className="p-3 rounded bg-rose-500/10 border border-rose-500/30 text-rose-400 text-xs font-medium text-center">
                 {errorMsg}
               </div>
             )}
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-                Government Clearance ID
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                Organizational Identity / Username
               </label>
               <input
                 type="text"
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
-                placeholder="Enter User ID (e.g. gov123)"
-                className="w-full px-4 py-2.5 rounded-lg bg-black/40 border border-cyan-500/30 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all"
+                className="w-full px-3.5 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-colors"
                 required
               />
             </div>
 
             <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
-                Security Passcode
+              <label className="block text-xs font-medium text-slate-300 mb-1.5">
+                Security Credential / Passcode
               </label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter Password"
-                className="w-full px-4 py-2.5 rounded-lg bg-black/40 border border-cyan-500/30 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all"
+                className="w-full px-3.5 py-2 rounded-lg bg-slate-900 border border-slate-700 text-slate-100 placeholder-slate-500 text-sm focus:outline-none focus:border-sky-500 focus:ring-1 focus:ring-sky-500 transition-colors"
                 required
               />
             </div>
@@ -106,25 +96,20 @@ export default function Home() {
             <button
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 px-4 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(0,212,255,0.3)] hover:shadow-[0_0_30px_rgba(0,212,255,0.5)] active:scale-[0.98] disabled:opacity-50 mt-2 flex items-center justify-center gap-2"
+              className="w-full py-2.5 px-4 rounded-lg bg-sky-600 hover:bg-sky-500 text-white font-medium text-xs tracking-wide transition-colors shadow-sm disabled:opacity-50 mt-2 flex items-center justify-center gap-2"
             >
               {isLoading ? (
-                <span>Authenticating Credentials...</span>
+                <span>Validating Session...</span>
               ) : (
-                <>
-                  <span>Authenticate Clearance</span>
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M14 5l7 7m0 0l-7 7m7-7H3" />
-                  </svg>
-                </>
+                <span>Authenticate Workspace Access →</span>
               )}
             </button>
           </form>
 
-          {/* Footer Notice */}
+          {/* Institutional Compliance Notice */}
           <div className="mt-8 pt-4 border-t border-slate-800 text-center">
-            <p className="text-[10px] text-slate-500 tracking-wider uppercase">
-              RESTRICTED ACCESS · AUTHORIZED PERSONNEL ONLY
+            <p className="text-[10.5px] text-slate-500 leading-relaxed">
+              Official institutional portal. Unauthorized connection attempts are logged in compliance with security guidelines.
             </p>
           </div>
         </div>
@@ -132,37 +117,41 @@ export default function Home() {
     );
   }
 
-  // Render Full Command Dashboard when authenticated
+  // Render Full Command Dashboard
   return (
-    <div className="flex flex-col h-screen bg-[#0B0F19] text-white font-sans overflow-hidden">
+    <div className="flex flex-col h-screen bg-[#080C14] text-slate-100 font-sans overflow-hidden">
       <Header />
-      <div className="flex-1 overflow-hidden p-1.5 pt-0 flex relative w-full">
+      
+      <div className="flex-1 overflow-hidden p-2 pt-1.5 flex gap-2 relative w-full">
         
-        {/* LEFT SIDEBAR */}
-        <div style={{ width: leftWidth, minWidth: 200, maxWidth: 600 }} className="h-full shrink-0 flex flex-col relative z-[500]">
+        {/* LEFT SIDEBAR (Live News & Defense) */}
+        <div style={{ width: leftWidth, minWidth: 260, maxWidth: 500 }} className="h-full shrink-0 flex flex-col relative z-20">
           <LeftSidebar />
         </div>
 
-        {/* MIDDLE SECTION (Map + Analytics + Domains) */}
-        <div className="flex-1 min-w-[400px] h-full flex flex-col relative py-0 overflow-y-auto thin-scroll scroll-smooth z-10 px-1">
-          <div className="flex flex-col min-h-full">
+        {/* MIDDLE SECTION (Map + Analytics + Deep Dives) */}
+        <div className="flex-1 min-w-[400px] h-full flex flex-col relative overflow-y-auto thin-scroll scroll-smooth z-10 px-0.5">
+          <div className="flex flex-col min-h-full gap-2">
+            
             {!isMapMaximized && (
-              <div className="shrink-0 mb-2 h-auto min-h-[95px]">
+              <div className="shrink-0 h-auto min-h-[95px]">
                 <TopAnalytics />
               </div>
             )}
-            <div className={`shrink-0 relative mb-2 transition-all duration-300 ${isMapMaximized ? "h-[calc(100vh-60px)]" : "h-[460px]"}`}>
+
+            <div className={`shrink-0 relative transition-all duration-300 ${isMapMaximized ? "h-[calc(100vh-68px)]" : "h-[470px]"}`}>
               <MapCenter isMaximized={isMapMaximized} onToggleMaximize={() => setIsMapMaximized(!isMapMaximized)} />
             </div>
+
             {!isMapMaximized && (
-              <div className="shrink-0 mb-4 h-auto min-h-[95px]">
+              <div className="shrink-0 h-auto min-h-[95px]">
                 <BottomAnalytics />
               </div>
             )}
 
-            {/* DOMAIN SECTIONS */}
+            {/* DEEP DIVE DOMAIN SECTIONS */}
             {!isMapMaximized && (
-              <div className="flex flex-col gap-6 p-1.5 pb-20">
+              <div className="flex flex-col gap-4 pb-20 mt-1">
                 <TechSection />
                 <AgriSection />
                 <ClimateSection />
@@ -174,8 +163,8 @@ export default function Home() {
           </div>
         </div>
 
-        {/* RIGHT SIDEBAR */}
-        <div style={{ width: rightWidth, minWidth: 200, maxWidth: 600 }} className="h-full shrink-0 flex flex-col relative z-[500]">
+        {/* RIGHT SIDEBAR (Military Expenditure & Treaties) */}
+        <div style={{ width: rightWidth, minWidth: 260, maxWidth: 500 }} className="h-full shrink-0 flex flex-col relative z-20">
           <RightSidebar />
         </div>
 

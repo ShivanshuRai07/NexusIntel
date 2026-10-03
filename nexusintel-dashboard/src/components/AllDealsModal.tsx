@@ -21,32 +21,47 @@ interface AllDealsModalProps {
 
 export default function AllDealsModal({ deals, onClose, onSelectDeal }: AllDealsModalProps) {
   const getRelativeTime = (isoString: string) => {
-    if(!isoString) return "just now";
+    if (!isoString) return "just now";
     const diff = Math.floor((Date.now() - new Date(isoString).getTime()) / 60000);
-    if(diff < 60) return `${diff}m ago`;
-    if(diff < 1440) return `${Math.floor(diff/60)}h ago`;
-    return `${Math.floor(diff/1440)}d ago`;
+    if (diff < 60) return `${diff}m ago`;
+    if (diff < 1440) return `${Math.floor(diff / 60)}h ago`;
+    return `${Math.floor(diff / 1440)}d ago`;
   };
 
   return (
-    <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/80 backdrop-blur-md">
-      <div className="glass-panel w-full max-w-4xl max-h-[85vh] overflow-hidden flex flex-col relative animate-data-stream" style={{ border: '1px solid rgba(255, 140, 0, 0.4)' }}>
+    <div className="fixed inset-0 z-[60] flex items-center justify-center p-6 bg-black/75 backdrop-blur-sm animate-fade-in">
+      <div className="bg-[#0F1626] border border-slate-700/80 w-full max-w-4xl max-h-[85vh] rounded-xl overflow-hidden flex flex-col shadow-2xl">
         
         {/* Header */}
-        <div className="px-5 py-4 border-b border-white/10 flex justify-between items-center bg-neon-orange/10 shrink-0">
-          <div className="flex items-center gap-3">
-            <span className="text-neon-orange animate-pulse">⚔</span>
-            <h2 className="font-orbitron text-lg font-bold text-neon-orange tracking-widest uppercase">Global Strategic Defense Events - 72 Hour Log</h2>
+        <div className="px-6 py-4 border-b border-slate-800 bg-slate-900/90 flex justify-between items-center shrink-0">
+          <div className="flex items-center gap-2.5">
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-400" />
+            <div>
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-slate-100">
+                Defense Procurement & Strategic Transfer Register
+              </h2>
+              <p className="text-[11px] text-slate-400">
+                Verified international military contracts, bilateral agreements & defense acquisitions
+              </p>
+            </div>
           </div>
-          <button onClick={onClose} className="text-text-secondary hover:text-white transition-colors bg-black/30 p-1.5 rounded-full hover:bg-white/10">
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+          <button 
+            onClick={onClose} 
+            className="text-slate-400 hover:text-slate-200 p-1.5 rounded-md hover:bg-slate-800 transition-colors"
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
           </button>
         </div>
 
         {/* List Content */}
-        <div className="flex-1 overflow-y-auto p-5 space-y-3 thin-scroll">
+        <div className="flex-1 overflow-y-auto p-5 space-y-2.5 thin-scroll">
           {deals.length === 0 ? (
-            <div className="h-full flex items-center justify-center text-neon-orange/60 animate-pulse font-orbitron">No recent deals located...</div>
+            <div className="h-40 flex items-center justify-center text-slate-400 text-xs font-mono">
+              No procurement records available in current timeframe.
+            </div>
           ) : (
             deals.map((deal) => (
               <div 
@@ -55,47 +70,57 @@ export default function AllDealsModal({ deals, onClose, onSelectDeal }: AllDeals
                   onClose();
                   onSelectDeal(deal);
                 }}
-                className="bg-black/40 border border-white/10 rounded-lg p-4 cursor-pointer hover:border-neon-orange/50 hover:bg-neon-orange/10 transition-all flex flex-col md:flex-row gap-4"
+                className="bg-slate-900/50 border border-slate-800 rounded-lg p-3.5 cursor-pointer hover:border-slate-700 hover:bg-slate-800/40 transition-all flex flex-col md:flex-row md:items-center justify-between gap-3 group"
               >
-                {/* Meta / Time */}
-                <div className="shrink-0 md:w-32 flex flex-col md:border-r border-white/10 pr-4">
-                  <div className="text-[10px] text-text-muted uppercase tracking-widest font-bold mb-1">Time Logged</div>
-                  <div className="text-sm font-orbitron text-white">{getRelativeTime(deal.date)}</div>
-                  <div className="text-[9px] text-text-secondary mt-1">{new Date(deal.date).toLocaleDateString()}</div>
-                  <div className="mt-auto pt-2">
-                     <span className="text-[8px] text-neon-blue px-1.5 py-0.5 rounded bg-neon-blue/10 border border-neon-blue/20 uppercase">
-                       {deal.category}
-                     </span>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="font-mono text-[10px] text-slate-400 uppercase tracking-wide">
+                      {deal.country1} → {deal.country2}
+                    </span>
+                    <span className="text-slate-600">·</span>
+                    <span className="text-[9px] px-1.5 py-0.5 rounded bg-slate-800 text-slate-400 font-medium">
+                      {deal.category}
+                    </span>
+                    <span className="text-slate-600">·</span>
+                    <span className="text-[9px] text-slate-500 font-mono">
+                      {getRelativeTime(deal.date)}
+                    </span>
                   </div>
-                </div>
 
-                {/* Main Details */}
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 text-[10px] text-text-secondary uppercase tracking-widest mb-1.5 font-bold">
-                    <span>{deal.country1}</span>
-                    <span className="text-neon-orange">→</span>
-                    <span>{deal.country2}</span>
-                  </div>
-                  <h3 className="text-base font-bold text-white mb-2 leading-tight">{deal.title}</h3>
-                  <p className="text-[11px] text-text-primary leading-relaxed line-clamp-2">{deal.details}</p>
+                  <h3 className="font-semibold text-xs text-slate-200 group-hover:text-sky-300 transition-colors line-clamp-1">
+                    {deal.title}
+                  </h3>
                   
-                  <div className="flex flex-wrap gap-2 mt-3">
-                    {deal.tags.map(tag => (
-                      <span key={tag} className="text-[9px] px-1.5 py-0.5 rounded bg-white/5 text-text-secondary uppercase">
-                        #{tag}
-                      </span>
-                    ))}
-                  </div>
+                  <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
+                    {deal.details}
+                  </p>
                 </div>
 
-                {/* Right Value Column */}
-                <div className="shrink-0 md:w-32 flex flex-col items-end justify-center md:border-l border-white/10 pl-4 text-right">
-                  <div className="text-[10px] text-text-muted uppercase tracking-widest mb-1">Transfer Value</div>
-                  <div className="text-lg font-orbitron font-bold text-neon-green">{deal.value}</div>
+                <div className="flex items-center gap-3 shrink-0 self-end md:self-center">
+                  <div className="text-right">
+                    <span className="text-[9px] text-slate-500 uppercase block">Value</span>
+                    <span className="font-mono font-bold text-xs text-emerald-400">
+                      {deal.value}
+                    </span>
+                  </div>
+                  <span className="text-xs text-slate-500 group-hover:text-slate-300 transition-colors">
+                    →
+                  </span>
                 </div>
               </div>
             ))
           )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-3 border-t border-slate-800 bg-slate-900/60 flex items-center justify-between text-[11px] text-slate-400">
+          <span>Displaying {deals.length} verified procurement events</span>
+          <button 
+            onClick={onClose}
+            className="px-3 py-1 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors"
+          >
+            Close Register
+          </button>
         </div>
 
       </div>

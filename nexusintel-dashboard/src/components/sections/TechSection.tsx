@@ -56,8 +56,9 @@ export default function TechSection() {
                   tick={{ fontSize: 9, fill: '#64748B' }} 
                 />
                 <Tooltip 
-                  contentStyle={{ background: '#0F172A', border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: '4px', fontSize: '10px' }}
-                  itemStyle={{ color: 'var(--neon-purple)' }}
+                  contentStyle={{ background: '#0F1626', border: '1px solid rgba(139, 92, 246, 0.4)', borderRadius: '6px', fontSize: '11px', color: '#F1F5F9', boxShadow: '0 8px 24px rgba(0,0,0,0.6)' }}
+                  itemStyle={{ color: '#A78BFA', fontWeight: 600, fontSize: '11px' }}
+                  labelStyle={{ color: '#F8FAFC', fontWeight: 600, marginBottom: '2px' }}
                 />
                 <Line 
                   type="monotone" 
@@ -92,8 +93,10 @@ export default function TechSection() {
                   width={60}
                 />
                 <Tooltip 
-                  cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                  contentStyle={{ background: '#0F172A', border: '1px solid rgba(0, 212, 255, 0.3)', borderRadius: '4px', fontSize: '10px' }}
+                  cursor={{ fill: 'rgba(255,255,255,0.06)' }}
+                  contentStyle={{ background: '#0F1626', border: '1px solid rgba(56, 189, 248, 0.4)', borderRadius: '6px', fontSize: '11px', color: '#F1F5F9', boxShadow: '0 8px 24px rgba(0,0,0,0.6)' }}
+                  itemStyle={{ color: '#38BDF8', fontWeight: 600, fontSize: '11px' }}
+                  labelStyle={{ color: '#F8FAFC', fontWeight: 600, marginBottom: '2px' }}
                 />
                 <Bar dataKey="capacity" radius={[0, 4, 4, 0]} barSize={12}>
                   {semiData.map((entry, index) => (

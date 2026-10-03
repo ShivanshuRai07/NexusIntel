@@ -62,7 +62,9 @@ export default function ScienceSection() {
                   tick={{ fontSize: 9, fill: '#64748B' }} 
                 />
                 <Tooltip 
-                  contentStyle={{ background: '#0F172A', border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: '4px', fontSize: '10px' }}
+                  contentStyle={{ background: '#0F1626', border: '1px solid rgba(139, 92, 246, 0.4)', borderRadius: '6px', fontSize: '11px', color: '#F1F5F9', boxShadow: '0 8px 24px rgba(0,0,0,0.6)' }}
+                  itemStyle={{ color: '#A78BFA', fontWeight: 600, fontSize: '11px' }}
+                  labelStyle={{ color: '#F8FAFC', fontWeight: 600, marginBottom: '2px' }}
                 />
                 <Area 
                   type="monotone" 
@@ -98,8 +100,10 @@ export default function ScienceSection() {
                   tick={{ fontSize: 9, fill: '#64748B' }} 
                 />
                 <Tooltip 
-                  cursor={{ fill: 'rgba(255,255,255,0.05)' }}
-                  contentStyle={{ background: '#0F172A', border: '1px solid rgba(139, 92, 246, 0.3)', borderRadius: '4px', fontSize: '10px' }}
+                  cursor={{ fill: 'rgba(255,255,255,0.06)' }}
+                  contentStyle={{ background: '#0F1626', border: '1px solid rgba(139, 92, 246, 0.4)', borderRadius: '6px', fontSize: '11px', color: '#F1F5F9', boxShadow: '0 8px 24px rgba(0,0,0,0.6)' }}
+                  itemStyle={{ color: '#A78BFA', fontWeight: 600, fontSize: '11px' }}
+                  labelStyle={{ color: '#F8FAFC', fontWeight: 600, marginBottom: '2px' }}
                 />
                 <Bar dataKey="delta" fill="var(--neon-purple)" radius={[2, 2, 0, 0]} barSize={12} />
               </BarChart>

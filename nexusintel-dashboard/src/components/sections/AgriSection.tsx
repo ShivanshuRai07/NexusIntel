@@ -60,7 +60,9 @@ export default function AgriSection() {
                   tick={{ fontSize: 9, fill: '#64748B' }} 
                 />
                 <Tooltip 
-                  contentStyle={{ background: '#0F172A', border: '1px solid rgba(0, 255, 136, 0.3)', borderRadius: '4px', fontSize: '10px' }}
+                  contentStyle={{ background: '#0F1626', border: '1px solid rgba(16, 185, 129, 0.4)', borderRadius: '6px', fontSize: '11px', color: '#F1F5F9', boxShadow: '0 8px 24px rgba(0,0,0,0.6)' }}
+                  itemStyle={{ color: '#10B981', fontWeight: 600, fontSize: '11px' }}
+                  labelStyle={{ color: '#F8FAFC', fontWeight: 600, marginBottom: '2px' }}
                 />
                 <Area 
                   type="monotone" 
@@ -97,7 +99,9 @@ export default function AgriSection() {
                   ))}
                 </Pie>
                 <Tooltip 
-                  contentStyle={{ background: '#0F172A', border: '1px solid rgba(0, 255, 136, 0.3)', borderRadius: '4px', fontSize: '10px' }}
+                  contentStyle={{ background: '#0F1626', border: '1px solid rgba(16, 185, 129, 0.4)', borderRadius: '6px', fontSize: '11px', color: '#F1F5F9', boxShadow: '0 8px 24px rgba(0,0,0,0.6)' }}
+                  itemStyle={{ color: '#10B981', fontWeight: 600, fontSize: '11px' }}
+                  labelStyle={{ color: '#F8FAFC', fontWeight: 600, marginBottom: '2px' }}
                 />
               </PieChart>
             </ResponsiveContainer>

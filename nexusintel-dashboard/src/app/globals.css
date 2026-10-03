@@ -2,20 +2,46 @@
 @tailwind components;
 @tailwind utilities;
 
-:root {
-  --bg: #0B0F19;
-  --panel: #0F1628;
-  --panel-2: #111827;
-  --border: rgba(0, 212, 255, 0.18);
-  --neon-blue: #00D4FF;
-  --neon-red: #FF2244;
-  --neon-green: #00FF88;
-  --neon-purple: #8B5CF6;
-  --neon-orange: #FF8C00;
-  --neon-cyan: #00FFCC;
-  --text: #E2E8F0;
+:root, html.dark {
+  --bg: #080C14;
+  --bg-header: #0B101D;
+  --panel: #0D1424;
+  --panel-card: #0F1626;
+  --panel-hover: #131B30;
+  --border: rgba(255, 255, 255, 0.08);
+  --border-strong: rgba(255, 255, 255, 0.16);
+  --accent-sky: #38BDF8;
+  --accent-blue: #2563EB;
+  --accent-red: #EF4444;
+  --accent-emerald: #10B981;
+  --accent-amber: #F59E0B;
+  --text-primary: #F1F5F9;
   --text-secondary: #94A3B8;
   --text-muted: #64748B;
+  --map-bg: #080C14;
+  --input-bg: #0D1424;
+  color-scheme: dark;
+}
+
+html.light {
+  --bg: #F1F5F9;
+  --bg-header: #FFFFFF;
+  --panel: #FFFFFF;
+  --panel-card: #F8FAFC;
+  --panel-hover: #F1F5F9;
+  --border: rgba(0, 0, 0, 0.09);
+  --border-strong: rgba(0, 0, 0, 0.18);
+  --accent-sky: #0284C7;
+  --accent-blue: #1D4ED8;
+  --accent-red: #DC2626;
+  --accent-emerald: #059669;
+  --accent-amber: #D97706;
+  --text-primary: #0F172A;
+  --text-secondary: #475569;
+  --text-muted: #64748B;
+  --map-bg: #E2E8F0;
+  --input-bg: #FFFFFF;
+  color-scheme: light;
 }
 
 * {
@@ -27,94 +53,89 @@
 html, body {
   height: 100%;
   background: var(--bg);
-  color: var(--text);
-  font-family: 'Inter', sans-serif;
+  color: var(--text-primary);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
   overflow: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  transition: background-color 0.2s ease, color 0.2s ease;
 }
 
-/* Scrollbar */
-::-webkit-scrollbar { width: 4px; height: 4px; }
-::-webkit-scrollbar-track { background: #0B0F19; }
-::-webkit-scrollbar-thumb { background: var(--neon-blue); border-radius: 2px; }
+/* Professional Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+  height: 5px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.2);
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.4);
+}
 
-/* Dark Glass panel */
+/* Institutional Panels */
 .glass-panel, .intel-card {
-  background: rgba(15, 22, 40, 0.85);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid rgba(0, 212, 255, 0.18);
+  background: var(--panel);
+  border: 1px solid var(--border);
   border-radius: 8px;
-  box-shadow: 0 4px 30px rgba(0,0,0,0.5), inset 0 1px 0 rgba(0, 212, 255, 0.08);
-  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px -1px rgba(0, 0, 0, 0.1);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
 }
 
 .glass-panel:hover, .intel-card:hover {
-  border-color: rgba(0, 212, 255, 0.4);
-  box-shadow: 0 4px 30px rgba(0,0,0,0.5), 0 0 20px rgba(0, 212, 255, 0.12);
+  border-color: var(--border-strong);
 }
 
-/* Red alert panel variant */
+/* Alert panel */
 .glass-panel-red {
-  background: rgba(25, 10, 15, 0.85);
+  background: rgba(26, 14, 18, 0.85);
   backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 34, 68, 0.3);
+  border: 1px solid rgba(239, 68, 68, 0.25);
   border-radius: 8px;
-  box-shadow: 0 4px 30px rgba(0,0,0,0.5);
 }
 
-/* Dashboard grid */
-.dashboard-grid {
-  display: grid;
-  grid-template-columns: 300px 1fr 300px;
-  grid-template-rows: auto 1fr auto;
-  gap: 6px;
-  height: calc(100vh - 60px);
-  padding: 6px;
-  background: #0B0F19;
-}
-
-/* Section header */
+/* Section Header */
 .section-header {
-  font-family: 'Inter', sans-serif;
-  font-size: 10px;
-  font-weight: 700;
-  letter-spacing: 1.5px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: var(--neon-blue);
-  border-bottom: 1px solid rgba(0, 212, 255, 0.2);
+  color: #94A3B8;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
   padding-bottom: 6px;
   margin-bottom: 8px;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px;
 }
 
-/* Live dot */
-.live-dot {
-  width: 8px;
-  height: 8px;
+/* Gentle Status Pulse (No harsh blinking) */
+.live-pulse {
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
-  background: var(--neon-red);
-  box-shadow: 0 0 10px var(--neon-red);
-  animation: blink 1s step-start infinite;
+  position: relative;
+  background-color: #10B981;
 }
 
-@keyframes blink {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.2; }
+.live-pulse::after {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 50%;
+  border: 1.5px solid #10B981;
+  opacity: 0.7;
+  animation: pulse-ring 2.5s cubic-bezier(0.215, 0.61, 0.355, 1) infinite;
 }
 
-@keyframes ticker-scroll {
-  0% { transform: translateX(0%); }
-  100% { transform: translateX(-50%); }
-}
-
-.animate-ticker {
-  animation: ticker-scroll 45s linear infinite;
-}
-
-.animate-blink {
-  animation: blink 1s step-start infinite;
+@keyframes pulse-ring {
+  0% { transform: scale(0.6); opacity: 0.9; }
+  50% { opacity: 0.4; }
+  100% { transform: scale(1.6); opacity: 0; }
 }
 
 /* Status Badges */
@@ -122,37 +143,155 @@ html, body {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  padding: 2px 6px;
+  padding: 2px 7px;
   border-radius: 4px;
-  font-size: 9px;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
 }
 
-.status-critical { background: rgba(255,34,68,0.2); border: 1px solid rgba(255,34,68,0.5); color: #FF2244; }
-.status-warning { background: rgba(255,140,0,0.2); border: 1px solid rgba(255,140,0,0.5); color: #FF8C00; }
-.status-stable { background: rgba(0,255,136,0.2); border: 1px solid rgba(0,255,136,0.5); color: #00FF88; }
-.status-monitor { background: rgba(0,212,255,0.2); border: 1px solid rgba(0,212,255,0.5); color: #00D4FF; }
+.status-critical {
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.28);
+  color: #F87171;
+}
 
-/* Scrollbar thin */
-.thin-scroll::-webkit-scrollbar { width: 3px; }
-.thin-scroll::-webkit-scrollbar-thumb { background: rgba(0,212,255,0.3); border-radius: 2px; }
+.status-warning {
+  background: rgba(245, 158, 11, 0.12);
+  border: 1px solid rgba(245, 158, 11, 0.28);
+  color: #FBBF24;
+}
 
-/* Leaflet Container Dark */
+.status-stable {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.28);
+  color: #34D399;
+}
+
+.status-monitor {
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.28);
+  color: #38BDF8;
+}
+
+/* Thin Scroll */
+.thin-scroll::-webkit-scrollbar {
+  width: 4px;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: rgba(148, 163, 184, 0.25);
+  border-radius: 4px;
+}
+.thin-scroll::-webkit-scrollbar-thumb:hover {
+  background: rgba(148, 163, 184, 0.45);
+}
+
+/* Leaflet Container Professional Dark Theme */
 .leaflet-container {
-  background: #050C1A !important;
-  font-family: 'Inter', sans-serif !important;
+  background: #080C14 !important;
+  font-family: inherit !important;
 }
 
 .leaflet-popup-content-wrapper {
-  background: rgba(15, 22, 40, 0.95) !important;
-  color: #E2E8F0 !important;
-  border: 1px solid rgba(0, 212, 255, 0.3) !important;
-  box-shadow: 0 10px 25px rgba(0,0,0,0.8) !important;
+  background: #0F1626 !important;
+  color: #F1F5F9 !important;
+  border: 1px solid rgba(255, 255, 255, 0.12) !important;
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.7) !important;
   border-radius: 8px !important;
+  padding: 2px !important;
 }
 
 .leaflet-popup-tip {
-  background: rgba(15, 22, 40, 0.95) !important;
+  background: #0F1626 !important;
 }
+
+.leaflet-popup-content {
+  margin: 10px 12px !important;
+  line-height: 1.4 !important;
+}
+
+/* Institutional Leaflet Hover Tooltips */
+.leaflet-tooltip, .nexusintel-tooltip {
+  background: var(--panel-card, #0F1626) !important;
+  color: var(--text-primary, #F1F5F9) !important;
+  border: 1px solid var(--border-strong, rgba(255, 255, 255, 0.18)) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 10px 25px -4px rgba(0, 0, 0, 0.6) !important;
+  padding: 6px 10px !important;
+  font-family: 'Inter', -apple-system, sans-serif !important;
+  font-size: 11px !important;
+  line-height: 1.4 !important;
+  pointer-events: none !important;
+}
+
+.leaflet-tooltip-top:before {
+  border-top-color: var(--panel-card, #0F1626) !important;
+}
+.leaflet-tooltip-bottom:before {
+  border-bottom-color: var(--panel-card, #0F1626) !important;
+}
+.leaflet-tooltip-left:before {
+  border-left-color: var(--panel-card, #0F1626) !important;
+}
+.leaflet-tooltip-right:before {
+  border-right-color: var(--panel-card, #0F1626) !important;
+}
+
+/* Universal Recharts Hover Tooltip Enhancements (Dark & Day Modes) */
+.recharts-default-tooltip {
+  background: var(--panel-card, #0F1626) !important;
+  border: 1px solid var(--border-strong, rgba(255, 255, 255, 0.18)) !important;
+  border-radius: 6px !important;
+  box-shadow: 0 12px 28px -4px rgba(0, 0, 0, 0.55) !important;
+  padding: 8px 12px !important;
+  color: var(--text-primary, #F8FAFC) !important;
+  backdrop-filter: blur(8px) !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif !important;
+}
+
+.recharts-tooltip-label {
+  color: var(--text-primary, #F8FAFC) !important;
+  font-size: 11px !important;
+  font-weight: 600 !important;
+  letter-spacing: 0.02em !important;
+  margin-bottom: 5px !important;
+  border-bottom: 1px solid var(--border, rgba(255, 255, 255, 0.08)) !important;
+  padding-bottom: 4px !important;
+}
+
+.recharts-tooltip-item-list {
+  padding: 0 !important;
+  margin: 0 !important;
+  list-style: none !important;
+}
+
+.recharts-tooltip-item {
+  color: var(--text-primary, #F1F5F9) !important;
+  font-size: 10.5px !important;
+  font-family: 'JetBrains Mono', monospace !important;
+  padding: 2px 0 !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 6px !important;
+}
+
+.recharts-tooltip-item-name {
+  color: var(--text-secondary, #94A3B8) !important;
+  font-weight: 500 !important;
+}
+
+.recharts-tooltip-item-separator {
+  color: var(--text-muted, #64748B) !important;
+  margin: 0 2px !important;
+}
+
+.recharts-tooltip-item-value {
+  color: var(--accent-sky, #38BDF8) !important;
+  font-weight: 600 !important;
+}
+
+.recharts-tooltip-cursor {
+  stroke: var(--border-strong, rgba(255, 255, 255, 0.2)) !important;
+  stroke-dasharray: 4 4 !important;
+}
+

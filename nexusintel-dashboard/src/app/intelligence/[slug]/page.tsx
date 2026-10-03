@@ -213,7 +213,9 @@ export default function IntelligenceDetail() {
                         tick={{ fontSize: 10, fill: '#64748B' }} 
                       />
                       <Tooltip 
-                        contentStyle={{ background: '#0F172A', border: `1px solid ${config.color}44`, borderRadius: '8px' }}
+                        contentStyle={{ background: '#0F1626', border: `1px solid ${config.color}66`, borderRadius: '6px', fontSize: '11px', color: '#F1F5F9', boxShadow: '0 8px 24px rgba(0,0,0,0.6)' }}
+                        itemStyle={{ color: config.color, fontWeight: 600, fontSize: '11px' }}
+                        labelStyle={{ color: '#F8FAFC', fontWeight: 600, marginBottom: '2px' }}
                       />
                       <Area 
                         type="monotone" 
@@ -237,7 +239,11 @@ export default function IntelligenceDetail() {
                         <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
                         <XAxis dataKey="field" axisLine={false} tickLine={false} tick={{ fontSize: 9 }} />
                         <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 9 }} />
-                        <Tooltip contentStyle={{ background: '#0F172A', border: 'none', borderRadius: '4px' }} />
+                        <Tooltip 
+                          contentStyle={{ background: '#0F1626', border: `1px solid ${config.color}66`, borderRadius: '6px', fontSize: '11px', color: '#F1F5F9', boxShadow: '0 8px 24px rgba(0,0,0,0.6)' }}
+                          itemStyle={{ color: config.color, fontWeight: 600, fontSize: '11px' }}
+                          labelStyle={{ color: '#F8FAFC', fontWeight: 600, marginBottom: '2px' }}
+                        />
                         <Bar dataKey="delta" fill={config.color} radius={[4, 4, 0, 0]} />
                       </BarChart>
                     </ResponsiveContainer>
