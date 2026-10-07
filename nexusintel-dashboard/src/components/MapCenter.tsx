@@ -1,21 +1,24 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 
-// TILE LAYERS (All 100% Free - 0 API Key Required)
+// TILE LAYERS (All 100% Free Esri High-Resolution Cartography - Zero API Key Required & Zero Watermarks)
 const TILE_LAYERS = {
   dark: {
-    url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
-    attribution: "&copy; OpenStreetMap & CARTO",
+    base: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    ref: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Tiles &copy; Esri & NOAA",
     label: "🌙 Intel Dark",
   },
   satellite: {
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    base: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    ref: "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
     attribution: "Tiles &copy; Esri & Maxar",
     label: "🛰 Satellite",
   },
   light: {
-    url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-    attribution: "&copy; OpenStreetMap & CARTO",
+    base: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}",
+    ref: "https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Reference/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Tiles &copy; Esri & HERE",
     label: "🌐 Enterprise Light",
   },
 };
@@ -64,7 +67,7 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
   const [liveShips, setLiveShips] = useState<any[]>([]);
   const [radarTimestamp, setRadarTimestamp] = useState<string>("");
 
-  // Fetch live news from API
+  // Fetch live news & real conflict events
   useEffect(() => {
     fetch('/api/news')
       .then(res => res.json())
@@ -88,7 +91,6 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
       return;
     }
     
-    // Auto switch to Intel Dark for tactical clarity
     if (activeLayer !== 'dark') {
       setActiveLayer('dark');
       switchLayer('dark');
@@ -105,7 +107,7 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
     return () => clearInterval(interval);
   }, [currentMode, refreshKey]);
 
-  // Initialize Map
+  // Initialize Map with Watermark-Free Esri High-Resolution Cartography
   useEffect(() => {
     if (typeof window === "undefined") return;
     
@@ -140,11 +142,20 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
 
       map.getContainer().style.background = "#050C1A";
 
-      const tile = L.tileLayer(TILE_LAYERS[activeLayer].url, {
+      // Base tile
+      const baseTile = L.tileLayer(TILE_LAYERS[activeLayer].base, {
         attribution: TILE_LAYERS[activeLayer].attribution,
         maxZoom: 18,
       }).addTo(map);
-      tileLayerRef.current = tile;
+      tileLayerRef.current = baseTile;
+
+      // Reference labels / political borders overlay
+      const refTile = L.tileLayer(TILE_LAYERS[activeLayer].ref, {
+        opacity: 0.75,
+        maxZoom: 18,
+        zIndex: 2,
+      }).addTo(map);
+      satLabelLayerRef.current = refTile;
 
       mapRef.current = map;
       mapInstance = map;
@@ -373,19 +384,18 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
       if (tileLayerRef.current) mapRef.current.removeLayer(tileLayerRef.current);
       if (satLabelLayerRef.current) mapRef.current.removeLayer(satLabelLayerRef.current);
 
-      const newTile = L.tileLayer(TILE_LAYERS[key].url, {
+      const newBaseTile = L.tileLayer(TILE_LAYERS[key].base, {
         attribution: TILE_LAYERS[key].attribution,
         maxZoom: 18,
       }).addTo(mapRef.current);
-      tileLayerRef.current = newTile;
+      tileLayerRef.current = newBaseTile;
 
-      if (key === "satellite") {
-        const labelTile = L.tileLayer(
-          "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
-          { opacity: 0.7 }
-        ).addTo(mapRef.current);
-        satLabelLayerRef.current = labelTile;
-      }
+      const newRefTile = L.tileLayer(TILE_LAYERS[key].ref, {
+        opacity: 0.75,
+        maxZoom: 18,
+        zIndex: 2,
+      }).addTo(mapRef.current);
+      satLabelLayerRef.current = newRefTile;
     });
   };
 
