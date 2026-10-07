@@ -1,36 +1,36 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 
-// TILE LAYERS
+// TILE LAYERS (All 100% Free - 0 API Key Required)
 const TILE_LAYERS = {
-  light: {
-    url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
-    attribution: "&copy; OpenStreetMap & CARTO",
-    label: "🌐 Enterprise Light",
-  },
-  satellite: {
-    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
-    attribution: "Tiles &copy; Esri",
-    label: "🛰 Satellite",
-  },
   dark: {
     url: "https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png",
     attribution: "&copy; OpenStreetMap & CARTO",
     label: "🌙 Intel Dark",
   },
+  satellite: {
+    url: "https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}",
+    attribution: "Tiles &copy; Esri & Maxar",
+    label: "🛰 Satellite",
+  },
+  light: {
+    url: "https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png",
+    attribution: "&copy; OpenStreetMap & CARTO",
+    label: "🌐 Enterprise Light",
+  },
 };
 
 // Map color codes to hex for leaflet
 const COLOR_MAP: Record<string, string> = {
-  "red": "#FF2244",           // Wars, attacks
+  "red": "#FF2244",           // Wars, attacks, high severity
   "green": "#00FF88",         // Positive global news
-  "orange": "#FF8C00",        // India domestic (terror/riot/disaster)
-  "yellow-orange": "#FFD700", // Upcoming issues/floods
-  "light-blue": "#00D4FF"     // Good news nationwide/economy
+  "orange": "#FF8C00",        // Domestic alerts / warnings
+  "yellow-orange": "#FFD700", // Risks / natural hazards
+  "light-blue": "#00D4FF"     // Infrastructure / economy
 };
 
 const filterOptions = ["All News Nodes", "Critical (Red)", "Warnings (Orange)", "Positive (Green)", "Economy (Blue)"];
-const mapModes = ["Standard", "Satellite Clouds 🛰️", "Live Precip 🌧️", "Live Ships 🚢", "Sea Temp 🌡️"];
+const mapModes = ["Standard", "Satellite Clouds 🛰️", "Live Doppler Radar 🌧️", "Live Ships 🚢"];
 
 interface MapCenterProps {
   isMaximized?: boolean;
@@ -39,18 +39,19 @@ interface MapCenterProps {
 
 export default function MapCenter({ isMaximized = false, onToggleMaximize }: MapCenterProps) {
   const mapRef = useRef<any>(null);
-  const [isInteracting, setIsInteracting] = useState(false);
   
   // Base layers
   const tileLayerRef = useRef<any>(null);
   const satLabelLayerRef = useRef<any>(null);
   
-  // Overlay mode layer (clouds/weather/ships)
+  // Overlay mode layer (clouds/radar/ships)
   const modeOverlayLayerRef = useRef<any>(null);
-  const modeRefLayerRef = useRef<any>(null); // Reference borders for satellite mode
+  const modeRefLayerRef = useRef<any>(null);
 
   // Markers groups
   const markersGroupRef = useRef<any>(null);
+  const conflictGroupRef = useRef<any>(null);
+  const shipsGroupRef = useRef<any>(null);
   
   // State
   const [activeFilter, setActiveFilter] = useState("All News Nodes");
@@ -61,52 +62,50 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
   const [newsMarkers, setNewsMarkers] = useState<any[]>([]);
   const [conflictMarkers, setConflictMarkers] = useState<any[]>([]);
   const [liveShips, setLiveShips] = useState<any[]>([]);
-  const conflictGroupRef = useRef<any>(null);
-  const shipsGroupRef = useRef<any>(null);
+  const [radarTimestamp, setRadarTimestamp] = useState<string>("");
 
   // Fetch live news from API
   useEffect(() => {
     fetch('/api/news')
       .then(res => res.json())
-      .then(data => setNewsMarkers(data))
+      .then(data => {
+        if (Array.isArray(data)) setNewsMarkers(data);
+      })
       .catch(console.error);
-  }, []);
+
+    fetch('/api/conflict')
+      .then(res => res.json())
+      .then(data => {
+        if (Array.isArray(data)) setConflictMarkers(data);
+      })
+      .catch(console.error);
+  }, [refreshKey]);
 
   // Poll live ships if mode is active
   useEffect(() => {
     if (currentMode !== "Live Ships 🚢") {
-      setLiveShips([]); // Clear ships if not in ship mode
-      // Fetch news and conflict data once when mode changes away from "Live Ships" or on initial load
-      fetch('/api/news').then(res => res.json()).then(setNewsMarkers).catch(console.error);
-      fetch('/api/conflict').then(res => res.json()).then(setConflictMarkers).catch(console.error);
+      setLiveShips([]);
       return;
     }
     
-    // If in "Live Ships" mode, poll for ships and conflict
-    // User Request: Force map to Intel Dark mode when Ships layer is activated
+    // Auto switch to Intel Dark for tactical clarity
     if (activeLayer !== 'dark') {
       setActiveLayer('dark');
-      switchLayer('dark'); // Call the switch function to apply immediately
+      switchLayer('dark');
     }
 
-    const fetchConflict = () => {
-      fetch('/api/conflict').then(res => res.json()).then(setConflictMarkers).catch(console.error);
-    };
-    fetchConflict(); // Initial fetch
-
     const fetchShips = () => {
-      fetch('/api/ships').then(res => res.json()).then(setLiveShips).catch(console.error);
+      fetch('/api/ships').then(res => res.json()).then(data => {
+        if (Array.isArray(data)) setLiveShips(data);
+      }).catch(console.error);
     };
-    fetchShips(); // Initial fetch
+    fetchShips();
 
-    const interval = setInterval(() => {
-      fetchShips();
-      fetchConflict();
-    }, 5000); // 5-second live ping for ships and conflict
+    const interval = setInterval(fetchShips, 6000);
     return () => clearInterval(interval);
   }, [currentMode, refreshKey]);
 
-  // Initialize Maps
+  // Initialize Map
   useEffect(() => {
     if (typeof window === "undefined") return;
     
@@ -116,8 +115,6 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
       const container = document.getElementById("nexusintel-map");
       if (!container) return;
 
-      // Check if map is already initialized on this container
-      // Leaflet attaches a _leaflet_id to the container
       if ((container as any)._leaflet_id) {
         return;
       }
@@ -162,20 +159,18 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
     };
   }, [refreshKey]);
 
-  // Build Intelligence Markers (News & Conflict)
+  // Build Intelligence Markers (News & USGS / GDACS Conflicts)
   useEffect(() => {
     if (!mapRef.current || !isLoaded) return;
 
     import("leaflet").then((L) => {
-      // Clear previous
       if (markersGroupRef.current) mapRef.current.removeLayer(markersGroupRef.current);
       if (conflictGroupRef.current) mapRef.current.removeLayer(conflictGroupRef.current);
 
       const nexusGroup = L.layerGroup();
       
-      // 1. News Markers
+      // 1. Live News Markers
       newsMarkers.forEach((news) => {
-        // Filter logic
         if (activeFilter === "Critical (Red)" && news.colorNode !== "red") return;
         if (activeFilter === "Warnings (Orange)" && !["orange", "yellow-orange"].includes(news.colorNode)) return;
         if (activeFilter === "Positive (Green)" && news.colorNode !== "green") return;
@@ -185,45 +180,46 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
         const icon = L.divIcon({
           className: "",
           html: `
-            <div style="position:relative;width:32px;height:32px;display:flex;align-items:center;justify-content:center; cursor:pointer;">
-              <div style="position:absolute;width:32px;height:32px;border-radius:50%;background:transparent;border:2px solid ${color};animation:nexus-pulse 2s ease-out infinite;opacity:0.7;"></div>
-              <div style="width:8px;height:8px;border-radius:50%;background:${color};box-shadow:0 0 10px ${color};z-index:10;"></div>
+            <div style="position:relative;width:28px;height:28px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+              <div style="position:absolute;width:28px;height:28px;border-radius:50%;background:transparent;border:2px solid ${color};animation:nexus-pulse 2s ease-out infinite;opacity:0.75;"></div>
+              <div style="width:7px;height:7px;border-radius:50%;background:${color};box-shadow:0 0 10px ${color};z-index:10;"></div>
             </div>
           `,
-          iconSize: [32, 32],
-          iconAnchor: [16, 16]
+          iconSize: [28, 28],
+          iconAnchor: [14, 14]
         });
 
         const marker = L.marker([news.lat, news.lng], { icon });
-        const sourceBranding = news.logo ? `<img src="${news.logo}" style="height:12px;width:auto;object-fit:contain;margin-right:6px;" />` : `<div style="width:8px;height:8px;border-radius:50%;background:${color};margin-right:6px;"></div>`;
 
         marker.bindPopup(`
-          <div style="background:rgba(10,15,25,0.98);border:1px solid ${color};border-radius:12px;padding:12px;min-width:260px;color:#E2E8F0;font-family:Inter,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,0.5);backdrop-filter:blur(10px);">
-            <div style="display:flex;align-items:center;margin-bottom:10px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:8px;">
-              ${sourceBranding}
-              <strong style="font-family:Orbitron;font-size:10px;color:${color};letter-spacing:1px;text-transform:uppercase;">${news.source}</strong>
+          <div style="background:rgba(10,15,25,0.98);border:1px solid ${color};border-radius:10px;padding:12px;min-width:250px;color:#E2E8F0;font-family:Inter,sans-serif;box-shadow:0 10px 30px rgba(0,0,0,0.5);">
+            <div style="display:flex;align-items:center;margin-bottom:8px;border-bottom:1px solid rgba(255,255,255,0.1);padding-bottom:6px;">
+              <strong style="font-size:10px;color:${color};letter-spacing:1px;text-transform:uppercase;">⚡ ${news.source}</strong>
             </div>
-            <h4 style="font-size:13px;font-weight:800;color:#FFF;margin-bottom:8px;line-height:1.3;">${news.title}</h4>
-            <p style="font-size:10.5px;color:#94A3B8;line-height:1.5;margin-bottom:12px;">${news.description}</p>
-            <div style="display:flex;justify-content:space-between;align-items:center;font-size:10px;">
-              <span style="color:#00D4FF;font-weight:bold;">📍 ${news.country}</span>
-              <span style="color:#64748B;">${new Date(news.publishedAt).toLocaleTimeString()}</span>
+            <h4 style="font-size:12px;font-weight:700;color:#FFF;margin-bottom:6px;line-height:1.35;">${news.title}</h4>
+            <p style="font-size:10px;color:#94A3B8;line-height:1.45;margin-bottom:10px;">${news.description}</p>
+            <div style="display:flex;justify-content:space-between;align-items:center;font-size:9px;border-top:1px solid rgba(255,255,255,0.06);padding-top:6px;">
+              <span style="color:#00D4FF;font-weight:600;">📍 ${news.country}</span>
+              <a href="${news.url || '#'}" target="_blank" style="color:${color};text-decoration:none;font-weight:bold;">DISPATCH [↗]</a>
             </div>
           </div>
         `, { className: "nexusintel-popup" });
         nexusGroup.addLayer(marker);
       });
 
-      // 2. Conflict Markers (ACLED Pattern)
+      // 2. Conflict / Seismic Real-Time Markers
       conflictMarkers.forEach((event) => {
+        const isSeismic = event.type?.toLowerCase().includes("seismic");
+        const markerColor = isSeismic ? "#FF8C00" : "#FF2244";
+
         const icon = L.divIcon({
           className: "",
           html: `
-            <div style="position:relative;width:24px;height:24px;display:flex;align-items:center;justify-content:center;">
-              <div style="position:absolute;inset:0;border:1px dashed #FF2244;border-radius:50%;animation:rotate-ring 4s linear infinite;"></div>
-              <div style="width:2px;height:14px;background:#FF2244;position:absolute;"></div>
-              <div style="width:14px;height:2px;background:#FF2244;position:absolute;"></div>
-              <div style="width:4px;height:4px;background:#FF2244;border-radius:50%;box-shadow:0 0 8px #FF2244;"></div>
+            <div style="position:relative;width:24px;height:24px;display:flex;align-items:center;justify-content:center;cursor:pointer;">
+              <div style="position:absolute;inset:0;border:1px dashed ${markerColor};border-radius:50%;animation:rotate-ring 5s linear infinite;"></div>
+              <div style="width:2px;height:12px;background:${markerColor};position:absolute;"></div>
+              <div style="width:12px;height:2px;background:${markerColor};position:absolute;"></div>
+              <div style="width:4px;height:4px;background:${markerColor};border-radius:50%;box-shadow:0 0 8px ${markerColor};"></div>
             </div>
           `,
           iconSize: [24, 24],
@@ -232,16 +228,15 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
 
         const marker = L.marker([event.lat, event.lng], { icon });
         marker.bindPopup(`
-          <div style="background:rgba(20,5,5,0.95);border:1px solid #FF2244;border-radius:8px;padding:12px;min-width:240px;color:#FFE;font-family:Inter,sans-serif;">
-            <div style="font-family:Orbitron;font-size:9px;color:#FF2244;text-transform:uppercase;margin-bottom:6px;letter-spacing:1px;">
-              ⚠️ CONFLICT EVENT: ${event.type}
+          <div style="background:rgba(20,5,10,0.98);border:1px solid ${markerColor};border-radius:10px;padding:12px;min-width:240px;color:#FFF;font-family:Inter,sans-serif;">
+            <div style="font-size:9px;color:${markerColor};text-transform:uppercase;margin-bottom:6px;letter-spacing:1px;font-weight:700;">
+              ⚠️ ${event.type || 'SEISMIC / CRISIS EVENT'}
             </div>
-            <div style="font-size:11px;font-weight:bold;margin-bottom:8px;">${event.description}</div>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:9px;color:#A11;border-top:1px solid rgba(255,0,0,0.1);padding-top:8px;">
-              <div>ACTOR: <span style="font-weight:bold;">${event.actor1}</span></div>
-              <div>FATALITIES: <span style="font-weight:bold;">${event.fatalities}</span></div>
-              <div>LOC: <span style="font-weight:bold;">${event.location}</span></div>
-              <div>SRC: <span style="font-weight:bold;">${event.source}</span></div>
+            <div style="font-size:11.5px;font-weight:700;margin-bottom:8px;line-height:1.3;">${event.description}</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:9px;border-top:1px solid rgba(255,34,68,0.2);padding-top:8px;">
+              <div>LOC: <span style="font-weight:bold;color:#E2E8F0;">${event.location}</span></div>
+              <div>FATALITIES: <span style="font-weight:bold;color:${markerColor};">${event.fatalities || 0}</span></div>
+              <div style="grid-column: span 2; color:#94A3B8; font-size:8px;">FEED: ${event.source}</div>
             </div>
           </div>
         `);
@@ -253,7 +248,7 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
     });
   }, [isLoaded, newsMarkers, conflictMarkers, activeFilter, refreshKey]);
 
-  // Build Ship Markers
+  // Build Ship Markers (OpenSeaMap & AIS)
   useEffect(() => {
     if (!mapRef.current || !isLoaded) return;
     import("leaflet").then((L) => {
@@ -267,7 +262,7 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
         const icon = L.divIcon({
           className: "",
           html: `
-            <div style="transform: rotate(${ship.heading}deg); width: 14px; height: 18px; position: relative; filter: drop-shadow(0 0 2px ${color});">
+            <div style="transform: rotate(${ship.heading}deg); width: 14px; height: 18px; position: relative; filter: drop-shadow(0 0 3px ${color});">
               <svg viewBox="0 0 14 18" style="width: 100%; height: 100%; overflow: visible;">
                 <path d="M7 0 L14 18 L7 14 L0 18 Z" fill="white" stroke="${color}" stroke-width="1.5" stroke-linejoin="round" />
               </svg>
@@ -280,7 +275,7 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
 
         const marker = L.marker([ship.lat, ship.lng], { icon });
         marker.bindTooltip(`
-          <strong style="color:${color};font-family:Orbitron;font-size:11px">${ship.name}</strong><br/>
+          <strong style="color:${color};font-size:11px">${ship.name}</strong><br/>
           <span style="font-size:9px;color:#94A3B8">Type: ${ship.type} | SPD: ${ship.speed}</span><br/>
           <span style="font-size:8px;color:#64748B">HDG: ${ship.heading}°</span>
         `, { className: "nexusintel-tooltip" });
@@ -293,15 +288,9 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
     });
   }, [liveShips, isLoaded]);
 
-  // Handle Mode Overlays (Clouds/Weather/Ships)
+  // Handle Mode Overlays (100% Free RainViewer Doppler / NASA GIBS / OpenSeaMap - 0 API Key Required)
   useEffect(() => {
     if (!mapRef.current || !isLoaded) return;
-
-    const getGibsDate = () => {
-      const date = new Date();
-      date.setUTCDate(date.getUTCDate() - 1);
-      return date.toISOString().split('T')[0];
-    };
 
     import("leaflet").then((L) => {
       if (modeOverlayLayerRef.current) mapRef.current.removeLayer(modeOverlayLayerRef.current);
@@ -309,68 +298,69 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
 
       if (currentMode === "Standard") return;
 
+      // 1. Live Ships & Nautical Beacons
       if (currentMode === "Live Ships 🚢") {
         modeOverlayLayerRef.current = L.tileLayer("https://tiles.openseamap.org/seamark/{z}/{x}/{y}.png", {
-          opacity: 0.8,
-          zIndex: 10
-        }).addTo(mapRef.current);
-        return;
-      }
-
-      if (currentMode === "Sea Temp 🌡️") {
-        // Fallback to open weather layers using openmeteo or similar free providers if available, or a public NOAA layer
-        modeOverlayLayerRef.current = L.tileLayer('https://{s}.tile.openweathermap.org/map/temp_new/{z}/{x}/{y}.png?appid=93450e181d11b1fc8fe0d15e21fb5c57', { // Publicly available dev key for demo UI
-          opacity: 0.6,
+          opacity: 0.85,
           zIndex: 10,
-          subdomains: ['a', 'b', 'c']
+          attribution: "&copy; OpenSeaMap Nautical Chart",
         }).addTo(mapRef.current);
         return;
       }
 
+      // 2. Real-Time Live Doppler Precipitation Radar (RainViewer Free Tier - No Key Required)
+      if (currentMode === "Live Doppler Radar 🌧️") {
+        fetch("https://api.rainviewer.com/public/weather-maps.json")
+          .then((res) => res.json())
+          .then((data) => {
+            const radarPath = data?.radar?.past?.slice(-1)[0]?.path;
+            if (radarPath && mapRef.current) {
+              const dateObj = new Date((data?.radar?.past?.slice(-1)[0]?.time || 0) * 1000);
+              setRadarTimestamp(dateObj.toLocaleTimeString());
+              
+              const radarTile = L.tileLayer(
+                `https://tilecache.rainviewer.com${radarPath}/256/{z}/{x}/{y}/2/1_1.png`,
+                {
+                  opacity: 0.75,
+                  zIndex: 12,
+                  attribution: "&copy; RainViewer Global Radar",
+                }
+              ).addTo(mapRef.current);
+              modeOverlayLayerRef.current = radarTile;
+            }
+          })
+          .catch((err) => {
+            console.error("Error loading RainViewer radar:", err);
+          });
+        return;
+      }
+
+      // 3. Satellite Clouds (NASA GIBS VIIRS High Resolution - No Key Required)
       if (currentMode === "Satellite Clouds 🛰️") {
-        // Using a 2-day-old date ensures the global mosaic is 100% complete with no processing gaps
-        const getMosaicedDate = () => {
-          const date = new Date();
-          date.setUTCDate(date.getUTCDate() - 2);
-          return date.toISOString().split('T')[0];
-        };
-        const mosaicDate = getMosaicedDate();
+        const d = new Date();
+        d.setUTCDate(d.getUTCDate() - 2);
+        const dateStr = d.toISOString().split("T")[0];
 
-        // VIIRS SNPP has a broader swath (3000km) than MODIS, leaving almost no stripes
-        const viirsUrl = `https://gibs-{s}.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/${mosaicDate}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`;
-        
-        // We create a group to overlay both VIIRS and a fallback to fill any tiny remaining gaps
+        const viirsUrl = `https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/VIIRS_SNPP_CorrectedReflectance_TrueColor/default/${dateStr}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`;
+
         const cloudsLayer = L.tileLayer(viirsUrl, {
-          subdomains: ['a', 'b', 'c'],
-          attribution: "&copy; NASA GIBS / VIIRS",
-          opacity: 1.0,
-          zIndex: 5
+          attribution: "&copy; NASA GIBS / VIIRS TrueColor",
+          opacity: 0.95,
+          zIndex: 6,
+          maxZoom: 9,
         });
 
-        // Add an additional layer for MODIS Aqua as a backfill for the equator if needed
-        const aquaUrl = `https://gibs-{s}.earthdata.nasa.gov/wmts/epsg3857/best/MODIS_Aqua_CorrectedReflectance_TrueColor/default/${mosaicDate}/GoogleMapsCompatible_Level9/{z}/{y}/{x}.jpg`;
-        const aquaLayer = L.tileLayer(aquaUrl, {
-          subdomains: ['a', 'b', 'c'],
-          opacity: 0.5, // Blend it in
-          zIndex: 4
-        });
+        // Add reference place borders over the cloud layer
+        modeRefLayerRef.current = L.tileLayer(
+          "https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}",
+          {
+            opacity: 0.7,
+            zIndex: 15,
+          }
+        ).addTo(mapRef.current);
 
-        const layerGroup = L.layerGroup([aquaLayer, cloudsLayer]).addTo(mapRef.current);
-        modeOverlayLayerRef.current = layerGroup;
-
-        modeRefLayerRef.current = L.tileLayer("https://server.arcgisonline.com/ArcGIS/rest/services/Reference/World_Boundaries_and_Places/MapServer/tile/{z}/{y}/{x}", {
-          opacity: 0.8,
-          zIndex: 15
-        }).addTo(mapRef.current);
-        return;
-      }
-
-      if (currentMode === "Live Precip 🌧️") {
-        // Use a public dev key for Rainviewer or OpenWeatherMap for demo UI
-        modeOverlayLayerRef.current = L.tileLayer(`https://tile.openweathermap.org/map/precipitation_new/{z}/{x}/{y}.png?appid=93450e181d11b1fc8fe0d15e21fb5c57`, {
-          opacity: 0.8,
-          zIndex: 10
-        }).addTo(mapRef.current);
+        cloudsLayer.addTo(mapRef.current);
+        modeOverlayLayerRef.current = cloudsLayer;
       }
     });
   }, [currentMode, isLoaded]);
@@ -402,70 +392,62 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
   return (
     <div className="glass-panel flex flex-col overflow-hidden h-full relative">
       {/* Controls row top */}
-      <div className="flex flex-col border-b border-white/5 shrink-0 z-10 relative bg-black/40 backdrop-blur-md">
+      <div className="flex flex-col border-b border-[var(--border-subtle)] shrink-0 z-10 relative bg-[var(--surface-1)] backdrop-blur-md">
         
         {/* Top Header & Base Maps */}
-        <div className="flex items-center justify-between px-3 py-1.5 border-b border-white/5">
+        <div className="flex items-center justify-between px-3 py-1.5 border-b border-[var(--border-subtle)]">
           <div className="section-header mb-0 flex items-center gap-3" style={{ margin: 0, border: "none", padding: 0 }}>
             <div className="flex items-center">
-              <span className="animate-blink text-neon-blue mr-1">●</span> 
-              <span>Real-Time Global Intel Map</span>
+              <span className="animate-blink text-neon-blue mr-1.5">●</span> 
+              <span className="font-bold text-[11px] text-[var(--text)]">REAL-TIME GLOBAL INTEL MAP</span>
               {currentMode !== "Standard" && (
-                <span className="ml-3 px-1.5 py-0.5 rounded-sm bg-neon-green/10 border border-neon-green/30 text-[8px] text-neon-green uppercase font-bold tracking-widest animate-pulse">
-                  {currentMode} ACTIVE
+                <span className="ml-3 px-1.5 py-0.5 rounded bg-neon-green/10 border border-neon-green/30 text-[8px] text-neon-green uppercase font-bold tracking-widest animate-pulse">
+                  {currentMode} ACTIVE {radarTimestamp && `(${radarTimestamp})`}
                 </span>
               )}
             </div>
             
-            {onToggleMaximize && (
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setRefreshKey(prev => prev + 1)}
-                  className="bg-neon-blue/20 hover:bg-neon-blue/30 text-neon-blue text-[8px] font-bold px-2 py-1 rounded border border-neon-blue/40 flex items-center gap-1 transition-all"
-                  title="Force Reload Map Nodes & Layers"
-                >
-                  <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
-                  RELOAD INTEL
-                </button>
-                <button
-                  onClick={() => {
-                    if (mapRef.current) mapRef.current.setView([25, 18], 3);
-                  }}
-                  className="bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-[8px] font-bold px-2 py-1 rounded border border-cyan-500/30 flex items-center gap-1 transition-all"
-                  title="Reset Map View"
-                >
-                  🎯 RE-CENTER
-                </button>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setRefreshKey(prev => prev + 1)}
+                className="bg-cyan-500/10 hover:bg-cyan-500/20 text-neon-blue text-[8px] font-bold px-2 py-1 rounded border border-cyan-500/30 flex items-center gap-1 transition-all"
+                title="Force Reload Map Nodes & Feeds"
+              >
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 2v6h-6M3 12a9 9 0 0 1 15-6.7L21 8M3 22v-6h6M21 12a9 9 0 0 1-15 6.7L3 16"/></svg>
+                RELOAD INTEL
+              </button>
+              <button
+                onClick={() => {
+                  if (mapRef.current) mapRef.current.setView([25, 18], 3);
+                }}
+                className="bg-[var(--card-bg)] hover:bg-white/10 text-[var(--text-secondary)] text-[8px] font-bold px-2 py-1 rounded border border-[var(--border-subtle)] flex items-center gap-1 transition-all"
+                title="Reset Map View"
+              >
+                🎯 RE-CENTER
+              </button>
+              {onToggleMaximize && (
                 <button
                   onClick={onToggleMaximize}
-                  className="bg-white/10 hover:bg-white/20 text-white text-[8px] font-bold px-2 py-1 rounded border border-white/20 flex items-center gap-1 transition-all"
+                  className="bg-[var(--card-bg)] hover:bg-white/10 text-[var(--text)] text-[8px] font-bold px-2 py-1 rounded border border-[var(--border-subtle)] flex items-center gap-1 transition-all"
                   title={isMaximized ? "Restore Default View" : "Maximize Map"}
                 >
-                  {isMaximized ? (
-                    <>
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3v3a2 2 0 0 1-2 2H3m18 0h-3a2 2 0 0 1-2-2V3m0 18v-3a2 2 0 0 1 2-2h3M3 16h3a2 2 0 0 1 2 2v3"/></svg>
-                      RESTORE
-                    </>
-                  ) : (
-                    <>
-                      <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
-                      MAXIMIZE
-                    </>
-                  )}
+                  {isMaximized ? "RESTORE" : "MAXIMIZE"}
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
-          <div className="flex rounded overflow-hidden" style={{ border: "1px solid rgba(255,255,255,0.1)" }}>
+
+          {/* Base Layer Switcher */}
+          <div className="flex rounded overflow-hidden border border-[var(--border-subtle)]">
             {(Object.entries(TILE_LAYERS) as [keyof typeof TILE_LAYERS, typeof TILE_LAYERS[keyof typeof TILE_LAYERS]][]).map(([key, val]) => (
               <button
                 key={key}
                 onClick={() => switchLayer(key)}
-                className="text-[7px] px-2 py-1 font-bold uppercase tracking-wider transition-all"
+                className="text-[7.5px] px-2.5 py-1 font-bold uppercase tracking-wider transition-all"
                 style={{
-                  background: activeLayer === key ? "rgba(0,212,255,0.15)" : "transparent",
-                  color: activeLayer === key ? "#00D4FF" : "#94A3B8",
-                  borderRight: key !== "hybrid" ? "1px solid rgba(255,255,255,0.08)" : "none",
+                  background: activeLayer === key ? "rgba(0,212,255,0.18)" : "transparent",
+                  color: activeLayer === key ? "var(--neon-blue)" : "var(--text-secondary)",
+                  borderRight: "1px solid var(--border-subtle)",
                 }}
               >
                 {val.label}
@@ -478,23 +460,20 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
         <div className="flex items-center justify-between px-3 py-1.5">
           {/* News Markers Filter */}
           <div className="flex items-center gap-2">
-            <span className="text-[7.5px] text-white/50 font-bold uppercase tracking-widest">News Node Filter:</span>
+            <span className="text-[7.5px] text-[var(--text-muted)] font-bold uppercase tracking-widest">News Node Filter:</span>
             <div className="relative">
               <select
                 value={activeFilter}
                 onChange={(e) => setActiveFilter(e.target.value)}
-                className="appearance-none bg-black/60 text-[#00D4FF] text-[8.5px] font-bold uppercase tracking-wider border border-white/10 rounded px-2.5 py-1 pr-7 cursor-pointer outline-none hover:border-[#00D4FF]/50 focus:border-[#00D4FF] transition-all"
-                style={{ boxShadow: '0 0 10px rgba(0,212,255,0.05)' }}
+                className="appearance-none bg-[var(--card-bg)] text-neon-blue text-[8.5px] font-bold uppercase tracking-wider border border-[var(--border-subtle)] rounded px-2.5 py-1 pr-7 cursor-pointer outline-none hover:border-cyan-500/50 transition-all"
               >
-                {filterOptions.map((f) => {
-                  return (
-                    <option key={f} value={f} className="bg-[#0B101A] text-white py-1">
-                      {f}
-                    </option>
-                  );
-                })}
+                {filterOptions.map((f) => (
+                  <option key={f} value={f} className="bg-[#0B101A] text-white py-1">
+                    {f}
+                  </option>
+                ))}
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-[#00D4FF]">
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-neon-blue">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
               </div>
             </div>
@@ -502,13 +481,12 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
 
           {/* Map Modes */}
           <div className="flex items-center gap-2">
-            <span className="text-[7.5px] text-white/50 font-bold uppercase tracking-widest">Map Layer Mode:</span>
+            <span className="text-[7.5px] text-[var(--text-muted)] font-bold uppercase tracking-widest">Tactical Layer Mode:</span>
             <div className="relative">
               <select
                 value={currentMode}
                 onChange={(e) => setCurrentMode(e.target.value)}
-                className="appearance-none bg-black/60 text-[#8B5CF6] text-[8.5px] font-bold uppercase tracking-wider border border-white/10 rounded px-2.5 py-1 pr-7 cursor-pointer outline-none hover:border-[#8B5CF6]/50 focus:border-[#8B5CF6] transition-all"
-                style={{ boxShadow: '0 0 10px rgba(139,92,246,0.05)' }}
+                className="appearance-none bg-[var(--card-bg)] text-purple-400 text-[8.5px] font-bold uppercase tracking-wider border border-[var(--border-subtle)] rounded px-2.5 py-1 pr-7 cursor-pointer outline-none hover:border-purple-500/50 transition-all"
               >
                 {mapModes.map((m) => (
                   <option key={m} value={m} className="bg-[#0B101A] text-white py-1">
@@ -516,7 +494,7 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
                   </option>
                 ))}
               </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-[#8B5CF6]">
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-1.5 text-purple-400">
                 <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2.5" d="M19 9l-7 7-7-7"></path></svg>
               </div>
             </div>
@@ -528,36 +506,30 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
       <div className="flex-1 relative overflow-hidden">
         <div id="nexusintel-map" style={{ width: "100%", height: "100%", background: "#050C1A", pointerEvents: "auto" }} />
         
-        {/* Legend */}
-        <div className="absolute bottom-4 left-2 z-20 glass-panel p-2 text-[8px] space-y-1 pointer-events-none">
-          <div className="text-text-secondary font-bold uppercase tracking-wider mb-1">Node Intel Legend</div>
+        {/* Node Intel Legend */}
+        <div className="absolute bottom-4 left-3 z-20 glass-panel p-2.5 text-[8px] space-y-1.5 pointer-events-none shadow-lg">
+          <div className="text-[var(--text)] font-bold uppercase tracking-wider mb-1">Live Intelligence Array</div>
           {[
-            { dot: "#FF2244", label: "War / Assault / Critical" },
-            { dot: "#FF8C00", label: "Domestic Riots / Terror" },
-            { dot: "#FFD700", label: "Upcoming Floods / Risk" },
-            { dot: "#00FF88", label: "Global Peace / Treaties" },
-            { dot: "#00D4FF", label: "National Biz / Infrastructure" },
+            { dot: "#FF2244", label: "USGS Earthquakes & Conflict Alerts" },
+            { dot: "#FF8C00", label: "Domestic Alerts / GDACS Emergencies" },
+            { dot: "#00FF88", label: "Diplomatic Pacts / Treaties" },
+            { dot: "#00D4FF", label: "Strategic Infrastructure & Trade" },
           ].map((l) => (
             <div key={l.label} className="flex items-center gap-1.5">
-              <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: l.dot, boxShadow: `0 0 4px ${l.dot}` }} />
-              <span className="text-text-secondary">{l.label}</span>
+              <div className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: l.dot, boxShadow: `0 0 5px ${l.dot}` }} />
+              <span className="text-[var(--text-secondary)] font-medium">{l.label}</span>
             </div>
           ))}
+          <div className="pt-1 border-t border-[var(--border-subtle)] text-[7px] text-[var(--text-muted)] font-mono">
+            {newsMarkers.length + conflictMarkers.length} Active Nodes Tracked
+          </div>
         </div>
 
-        {/* Temperature Legend */}
-        {currentMode === "Sea Temp 🌡️" && (
-          <div className="absolute bottom-4 right-4 z-20 flex rounded-md overflow-hidden text-[10px] font-bold text-white shadow-lg pointer-events-none" style={{ border: '1px solid rgba(255,255,255,0.2)' }}>
-            <div className="px-2 py-1" style={{ background: '#71255e' }}>-30</div>
-            <div className="px-2 py-1" style={{ background: '#5d1c81' }}>-20</div>
-            <div className="px-2 py-1" style={{ background: '#383296' }}>-10</div>
-            <div className="px-2 py-1" style={{ background: '#458bdc' }}>0</div>
-            <div className="px-2 py-1" style={{ background: '#74bfb4' }}>10</div>
-            <div className="px-2 py-1" style={{ background: '#b1d164' }}>20</div>
-            <div className="px-2 py-1" style={{ background: '#f5c64f' }}>25</div>
-            <div className="px-2 py-1" style={{ background: '#eb6c2f' }}>30</div>
-            <div className="px-2 py-1" style={{ background: '#c81c1c' }}>40</div>
-            <div className="px-2 py-1" style={{ background: '#64041e' }}>50</div>
+        {/* Live Doppler Radar Banner when active */}
+        {currentMode === "Live Doppler Radar 🌧️" && (
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 z-20 px-3 py-1 rounded-full bg-cyan-950/85 border border-cyan-400/40 text-[9px] font-mono text-cyan-300 shadow-xl pointer-events-none flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-cyan-400 animate-ping" />
+            <span>RAINVIEWER LIVE GLOBAL RADAR · 0 API KEYS REQUIRED</span>
           </div>
         )}
       </div>
@@ -566,8 +538,8 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
         @import url('https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css');
 
         @keyframes nexus-pulse {
-          0% { transform: scale(0.6); opacity: 0.8; }
-          100% { transform: scale(2.2); opacity: 0; }
+          0% { transform: scale(0.6); opacity: 0.85; }
+          100% { transform: scale(2.4); opacity: 0; }
         }
 
         #nexusintel-map .leaflet-container {
@@ -588,7 +560,7 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
           font-size: 16px !important;
         }
         #nexusintel-map .leaflet-control-zoom a:hover {
-          background: rgba(0,212,255,0.1) !important;
+          background: rgba(0,212,255,0.15) !important;
         }
 
         #nexusintel-map .leaflet-control-attribution {
@@ -596,40 +568,6 @@ export default function MapCenter({ isMaximized = false, onToggleMaximize }: Map
           color: #475569 !important;
           font-size: 7px !important;
           backdrop-filter: blur(4px);
-        }
-        #nexusintel-map .leaflet-control-attribution a {
-          color: #00D4FF !important;
-        }
-
-        .nexusintel-popup .leaflet-popup-content-wrapper {
-          background: transparent !important;
-          border: none !important;
-          box-shadow: none !important;
-          padding: 0 !important;
-        }
-        .nexusintel-popup .leaflet-popup-content {
-          margin: 0 !important;
-        }
-        .nexusintel-popup .leaflet-popup-tip-container {
-          display: none !important;
-        }
-        .nexusintel-popup .leaflet-popup-close-button {
-          color: #00D4FF !important;
-          top: 6px !important;
-          right: 10px !important;
-          font-size: 16px !important;
-        }
-        
-        /* Custom select styling for map filters */
-        select option {
-          background: #0B101A;
-          color: #E2E8F0;
-          font-weight: 600;
-          padding: 8px;
-        }
-        select option:hover, select option:checked {
-          background: rgba(0,212,255,0.15) !important;
-          color: #00D4FF !important;
         }
       `}</style>
     </div>

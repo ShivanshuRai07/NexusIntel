@@ -18,6 +18,10 @@ function DonutChart({ segments }: { segments: { label: string; value: number; co
     const total = segments.reduce((s, x) => s + x.value, 0);
     let angle = -Math.PI / 2;
 
+    const isLight = document.documentElement.getAttribute("data-theme") === "light";
+    const holeColor = isLight ? "#FFFFFF" : "#0F1628";
+    const centerTextColor = isLight ? "#0F172A" : "#E2E8F0";
+
     ctx.clearRect(0, 0, W, H);
     segments.forEach((seg) => {
       const span = (seg.value / total) * Math.PI * 2;
@@ -33,7 +37,7 @@ function DonutChart({ segments }: { segments: { label: string; value: number; co
       // Inner donut hole
       ctx.beginPath();
       ctx.arc(cx, cy, r, 0, Math.PI * 2);
-      ctx.fillStyle = "#0B0F19";
+      ctx.fillStyle = holeColor;
       ctx.shadowBlur = 0;
       ctx.fill();
 
@@ -41,14 +45,13 @@ function DonutChart({ segments }: { segments: { label: string; value: number; co
     });
 
     // Center text
-    ctx.fillStyle = "#E2E8F0";
-    ctx.font = `bold 10px 'Orbitron', sans-serif`;
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
+    ctx.font = `bold 10px 'Inter', sans-serif`;
     ctx.fillStyle = "#00D4FF";
     ctx.fillText("RISK", cx, cy - 4);
     ctx.font = `7px 'Inter', sans-serif`;
-    ctx.fillStyle = "#94A3B8";
+    ctx.fillStyle = centerTextColor;
     ctx.fillText("INDEX", cx, cy + 6);
   }, [segments]);
 
@@ -59,8 +62,8 @@ function DonutChart({ segments }: { segments: { label: string; value: number; co
 function HBar({ label, value, max, color }: { label: string; value: number; max: number; color: string }) {
   return (
     <div className="flex items-center gap-2">
-      <span className="text-[8px] text-text-secondary w-28 shrink-0">{label}</span>
-      <div className="flex-1 h-2 bg-white/5 rounded-full overflow-hidden">
+      <span className="text-[8px] text-[var(--text-secondary)] w-28 shrink-0">{label}</span>
+      <div className="flex-1 h-2 bg-[var(--border-subtle)] rounded-full overflow-hidden">
         <div
           className="h-full rounded-full transition-all duration-1000"
           style={{
@@ -145,7 +148,7 @@ export default function BottomAnalytics() {
             {riskSegments.map((s) => (
               <div key={s.label} className="flex items-center gap-2">
                 <div className="w-2 h-2 rounded-sm shrink-0" style={{ background: s.color, boxShadow: `0 0 4px ${s.color}` }} />
-                <span className="text-[8px] text-text-secondary flex-1">{s.label}</span>
+                <span className="text-[8px] text-[var(--text-secondary)] flex-1">{s.label}</span>
                 <span className="text-[9px] font-bold" style={{ color: s.color }}>{s.value}%</span>
               </div>
             ))}
@@ -163,15 +166,15 @@ export default function BottomAnalytics() {
             <HBar key={d.label} {...d} />
           ))}
         </div>
-        <div className="flex gap-3 mt-2 pt-2 border-t border-white/5">
+        <div className="flex gap-3 mt-2 pt-2 border-t border-[var(--border-subtle)]">
           {[
             { label: "Total Personnel", val: "2.4M", color: "#FF2244" },
             { label: "Active Theaters", val: "12", color: "#FF8C00" },
             { label: "Naval Groups", val: "8", color: "#8B5CF6" },
           ].map((s) => (
             <div key={s.label} className="flex-1 text-center">
-              <div className="font-orbitron text-[11px] font-bold" style={{ color: s.color }}>{s.val}</div>
-              <div className="text-[6.5px] text-text-muted">{s.label}</div>
+              <div className="text-[11px] font-bold" style={{ color: s.color }}>{s.val}</div>
+              <div className="text-[6.5px] text-[var(--text-muted)]">{s.label}</div>
             </div>
           ))}
         </div>
@@ -185,17 +188,17 @@ export default function BottomAnalytics() {
         <div className="flex gap-2 flex-1">
           <div className="flex-1 flex flex-col">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[7px] text-text-secondary">Energy Prices</span>
+              <span className="text-[7px] text-[var(--text-secondary)]">Energy Prices</span>
               <span className="text-[8px] font-bold" style={{ color: "#FF8C00" }}>+14.2%</span>
             </div>
             <div className="flex-1 min-h-0" style={{ height: "45px" }}>
               <MiniLineChart data={energyData} color="#FF8C00" />
             </div>
           </div>
-          <div className="w-px bg-white/10" />
+          <div className="w-px bg-[var(--border-subtle)]" />
           <div className="flex-1 flex flex-col">
             <div className="flex items-center justify-between mb-1">
-              <span className="text-[7px] text-text-secondary">Trade Routes</span>
+              <span className="text-[7px] text-[var(--text-secondary)]">Trade Routes</span>
               <span className="text-[8px] font-bold" style={{ color: "#00FFCC" }}>Suez: CRITICAL</span>
             </div>
             <div className="flex-1 min-h-0" style={{ height: "45px" }}>
@@ -203,15 +206,15 @@ export default function BottomAnalytics() {
             </div>
           </div>
         </div>
-        <div className="flex gap-2 mt-2 pt-2 border-t border-white/5">
+        <div className="flex gap-2 mt-2 pt-2 border-t border-[var(--border-subtle)]">
           {[
             { label: "Oil ($/bbl)", val: "$94.6", color: "#FF8C00", delta: "+2.4" },
             { label: "Gas ($/MMBtu)", val: "$8.9", color: "#FFD700", delta: "+0.7" },
             { label: "Gold ($/oz)", val: "$2,380", color: "#00FFCC", delta: "+15" },
           ].map((r) => (
-            <div key={r.label} className="flex-1 glass-panel p-1 text-center rounded">
+            <div key={r.label} className="flex-1 bg-[var(--card-bg)] border border-[var(--border-subtle)] p-1 text-center rounded">
               <div className="text-[8px] font-bold" style={{ color: r.color }}>{r.val}</div>
-              <div className="text-[6.5px] text-text-muted">{r.label}</div>
+              <div className="text-[6.5px] text-[var(--text-muted)]">{r.label}</div>
               <div className="text-[6.5px] text-neon-green">▲{r.delta}</div>
             </div>
           ))}

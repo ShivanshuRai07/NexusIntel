@@ -52,7 +52,7 @@ export default function RightSidebar() {
             return (
               <div
                 key={country.code}
-                className="rounded p-1.5 cursor-pointer transition-all bg-white/[0.02] border border-white/5 hover:border-white/20"
+                className="rounded p-1.5 cursor-pointer transition-all bg-[var(--card-bg)] border border-[var(--border-subtle)] hover:border-[var(--glass-border)]"
                 onClick={() => setExpanded(isExpanded ? null : i)}
               >
                 <div className="flex items-center gap-1.5">
@@ -62,7 +62,7 @@ export default function RightSidebar() {
                   <span className="text-sm leading-none">{country.flag}</span>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between">
-                      <span className="text-[9px] font-bold text-white truncate">{country.name}</span>
+                      <span className="text-[9px] font-bold text-[var(--text)] truncate">{country.name}</span>
                       <div className="flex items-center gap-1.5 shrink-0 ml-1">
                         <span className="text-[8px] font-bold font-mono" style={{ color: country.color }}>
                           ${country.budget}B
@@ -72,7 +72,7 @@ export default function RightSidebar() {
                         </span>
                       </div>
                     </div>
-                    <div className="mt-1 h-1 rounded-full overflow-hidden bg-white/5">
+                    <div className="mt-1 h-1 rounded-full overflow-hidden bg-[var(--border-subtle)]">
                       <div
                         className="h-full rounded-full transition-all duration-1000"
                         style={{
@@ -86,14 +86,14 @@ export default function RightSidebar() {
                 </div>
 
                 {isExpanded && (
-                  <div className="mt-1.5 pt-1.5 border-t border-white/10 grid grid-cols-2 gap-1 text-center bg-black/30 rounded p-1">
+                  <div className="mt-1.5 pt-1.5 border-t border-[var(--border-subtle)] grid grid-cols-2 gap-1 text-center bg-[var(--surface-2)] rounded p-1">
                     <div>
-                      <div className="text-[8px] font-bold text-white font-mono">{country.code}</div>
-                      <div className="text-[6px] text-slate-400 uppercase">Country Code</div>
+                      <div className="text-[8px] font-bold text-[var(--text)] font-mono">{country.code}</div>
+                      <div className="text-[6px] text-[var(--text-secondary)] uppercase">Country Code</div>
                     </div>
                     <div>
                       <div className="text-[8px] font-bold text-emerald-400 font-mono">{country.change}</div>
-                      <div className="text-[6px] text-slate-400 uppercase">YoY Change</div>
+                      <div className="text-[6px] text-[var(--text-secondary)] uppercase">YoY Change</div>
                     </div>
                   </div>
                 )}
@@ -113,10 +113,10 @@ export default function RightSidebar() {
             <div key={a.name} className="flex items-center gap-2">
               <div className="w-1.5 h-1.5 rounded-full" style={{ background: a.color, boxShadow: `0 0 6px ${a.color}` }} />
               <span className="text-[9px] font-bold" style={{ color: a.color }}>{a.name}</span>
-              <div className="flex-1 h-1 bg-white/5 rounded-full overflow-hidden border border-white/10">
+              <div className="flex-1 h-1 bg-[var(--border-subtle)] rounded-full overflow-hidden border border-[var(--border-subtle)]">
                 <div style={{ width: `${Math.min(a.members * 6, 100)}%`, background: a.color, height: '100%' }} />
               </div>
-              <span className="text-[8px] font-mono text-slate-300 font-bold">{a.members}</span>
+              <span className="text-[8px] font-mono text-[var(--text-secondary)] font-bold">{a.members}</span>
               {a.active && <div className="w-1 h-1 rounded-full bg-emerald-400 animate-blink" />}
             </div>
           ))}

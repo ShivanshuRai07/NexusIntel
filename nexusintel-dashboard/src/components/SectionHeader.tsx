@@ -14,7 +14,7 @@ export default function SectionHeader({ title, href, icon, subtitle, color = "va
   return (
     <div className="flex flex-col mb-4 pt-8 first:pt-4 group cursor-pointer">
       <Link href={href}>
-        <div className="flex items-center justify-between group-hover:opacity-80 transition-opacity">
+        <div className="flex items-center justify-between group-hover:opacity-85 transition-opacity">
           <div className="flex items-center gap-3">
             {icon && <div style={{ color }}>{icon}</div>}
             <div>
@@ -22,14 +22,14 @@ export default function SectionHeader({ title, href, icon, subtitle, color = "va
                 {title}
               </h2>
               {subtitle && (
-                <p className="text-[10px] text-text-secondary font-orbitron tracking-widest uppercase mt-0.5 opacity-70">
+                <p className="text-[10px] text-[var(--text-secondary)] tracking-widest uppercase mt-0.5 opacity-70">
                   {subtitle}
                 </p>
               )}
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-[10px] text-text-muted font-bold tracking-tighter uppercase group-hover:text-white transition-colors">
+            <span className="text-[10px] text-[var(--text-muted)] font-bold tracking-tighter uppercase group-hover:text-[var(--text)] transition-colors">
               DETAILED ANALYSIS
             </span>
             <svg 
@@ -49,7 +49,7 @@ export default function SectionHeader({ title, href, icon, subtitle, color = "va
           </div>
         </div>
       </Link>
-      <div className="h-[1px] w-full mt-2 bg-gradient-to-r from-white/20 to-transparent" />
+      <div className="h-[1px] w-full mt-2 bg-gradient-to-r from-[var(--border)] to-transparent" />
     </div>
   );
 }

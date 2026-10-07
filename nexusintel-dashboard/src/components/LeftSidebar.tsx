@@ -81,7 +81,7 @@ export default function LeftSidebar() {
       <div className="flex flex-col gap-2 h-full overflow-y-auto thin-scroll relative pr-1 pb-4">
         {/* Global Live News Feed */}
         <div className="glass-panel p-2.5 flex flex-col shrink-0 h-[450px] relative">
-          <div className="section-header hover:bg-white/5 cursor-pointer transition-colors rounded">
+          <div className="section-header cursor-pointer transition-colors rounded">
             <div className="live-dot" />
             Global Live News Feed
           </div>
@@ -98,7 +98,7 @@ export default function LeftSidebar() {
                   return (
                     <div
                       key={`${e.id}-${i}`}
-                      className="mb-2 p-2.5 rounded bg-black/40 border-l-2 border-white/10 hover:border-white/30 hover:bg-white/[0.06] transition-all group relative overflow-hidden"
+                      className="mb-2 p-2.5 rounded bg-[var(--card-bg)] border border-[var(--border-subtle)] border-l-2 hover:border-[var(--glass-border)] transition-all group relative overflow-hidden"
                       style={{ borderLeftColor: uiColor }}
                     >
                       <div className="flex items-center justify-between mb-1">
@@ -108,17 +108,17 @@ export default function LeftSidebar() {
                             {e.source.toUpperCase()}
                           </span>
                         </div>
-                        <span className="text-[7px] text-slate-400 font-medium">{getRelativeTime(e.publishedAt)}</span>
+                        <span className="text-[7px] text-[var(--text-secondary)] font-medium">{getRelativeTime(e.publishedAt)}</span>
                       </div>
 
-                      <p className="text-[10.5px] font-bold text-white leading-tight mb-1 group-hover:text-neon-blue transition-colors">
+                      <p className="text-[10.5px] font-bold text-[var(--text)] leading-tight mb-1 group-hover:text-neon-blue transition-colors">
                         {e.title}
                       </p>
-                      <p className="text-[9px] text-slate-400 leading-normal mb-1.5 line-clamp-2">
+                      <p className="text-[9px] text-[var(--text-secondary)] leading-normal mb-1.5 line-clamp-2">
                         {e.description}
                       </p>
 
-                      <div className="flex justify-between items-center pt-1 border-t border-white/5">
+                      <div className="flex justify-between items-center pt-1 border-t border-[var(--border-subtle)]">
                         <span className="status-badge text-[6px] py-0.5 px-1.5" style={{ color: uiColor, background: `${uiColor}15`, border: `1px solid ${uiColor}30` }}>
                           {tagMap[e.colorNode] || "INTEL UPDATE"}
                         </span>
@@ -147,7 +147,7 @@ export default function LeftSidebar() {
             </div>
             <button 
               onClick={() => setShowAllDeals(true)}
-              className="text-[9px] font-bold text-neon-orange uppercase tracking-widest hover:text-white transition-colors"
+              className="text-[9px] font-bold text-neon-orange uppercase tracking-widest hover:underline transition-colors"
             >
               See All →
             </button>
@@ -162,21 +162,21 @@ export default function LeftSidebar() {
               {defenseDeals.map((deal) => (
                 <div 
                   key={deal.id} 
-                  className="bg-black/30 border border-white/10 rounded p-2 cursor-pointer hover:border-neon-orange/40 hover:bg-neon-orange/5 transition-all group"
+                  className="bg-[var(--card-bg)] border border-[var(--border-subtle)] rounded p-2 cursor-pointer hover:border-neon-orange/40 hover:bg-neon-orange/5 transition-all group"
                   onClick={() => setSelectedDeal(deal)}
                 >
                   <div className="flex justify-between items-center mb-1">
-                    <div className="flex items-center gap-1.5 text-[8px] text-slate-400 uppercase tracking-widest">
+                    <div className="flex items-center gap-1.5 text-[8px] text-[var(--text-secondary)] uppercase tracking-widest">
                       <span>{deal.country1}</span>
                       <span>→</span>
                       <span>{deal.country2}</span>
                     </div>
-                    <span className="text-[8px] text-slate-400">{getRelativeTime(deal.date)}</span>
+                    <span className="text-[8px] text-[var(--text-secondary)]">{getRelativeTime(deal.date)}</span>
                   </div>
-                  <div className="text-[9.5px] font-bold text-white group-hover:text-neon-orange transition-colors leading-snug">
+                  <div className="text-[9.5px] font-bold text-[var(--text)] group-hover:text-neon-orange transition-colors leading-snug">
                     {deal.title}
                   </div>
-                  <div className="flex justify-between items-center mt-1.5 pt-1 border-t border-white/5">
+                  <div className="flex justify-between items-center mt-1.5 pt-1 border-t border-[var(--border-subtle)]">
                     <span className="text-[7px] text-neon-blue px-1 py-0.5 rounded bg-neon-blue/10 border border-neon-blue/20">
                       {deal.category}
                     </span>
@@ -191,11 +191,11 @@ export default function LeftSidebar() {
         {/* Dynamic News Ticker */}
         <div className="glass-panel-red p-1.5 overflow-hidden shrink-0">
           <div className="flex items-center gap-2">
-            <span className="text-[8px] font-bold text-red-400 shrink-0 animate-blink font-mono">INTEL WIRE</span>
+            <span className="text-[8px] font-bold text-red-500 shrink-0 animate-blink font-mono">INTEL WIRE</span>
             <div className="overflow-hidden flex-1">
               <div className="flex gap-8 animate-ticker whitespace-nowrap" style={{ width: "max-content" }}>
                 {[...dynamicTicker, ...dynamicTicker].map((item, i) => (
-                  <span key={i} className="text-[8px] text-slate-300 shrink-0 font-medium">{item}</span>
+                  <span key={i} className="text-[8px] text-[var(--text)] shrink-0 font-medium">{item}</span>
                 ))}
               </div>
             </div>

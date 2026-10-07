@@ -85,7 +85,7 @@ function BarChart({ data, color }: { data: { label: string; value: number }[]; c
                 minHeight: "2px",
               }}
             />
-            <span className="text-[6.5px] text-slate-400 font-medium text-center">{d.label}</span>
+            <span className="text-[6.5px] text-[var(--text-secondary)] font-medium text-center">{d.label}</span>
           </div>
         );
       })}
@@ -129,15 +129,23 @@ export default function TopAnalytics() {
   }, []);
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      const newPrecip = parseFloat((Math.random() * 8 + 0.5).toFixed(1));
-      setCurrentPrecip(newPrecip);
-      setPrecipHistory(prev => [...prev.slice(1), { label: prev[prev.length - 1].label, value: newPrecip }]);
-
-      const newTemp = parseFloat((Math.random() * 6 + 18).toFixed(1));
-      setCurrentTemp(newTemp);
-      setTempHistory(prev => [...prev.slice(1), newTemp]);
-    }, 15000);
+    const fetchWeather = () => {
+      fetch("https://api.open-meteo.com/v1/forecast?latitude=28.61&longitude=77.23&current=temperature_2m,precipitation")
+        .then(res => res.json())
+        .then(data => {
+          if (data && data.current) {
+            const temp = Number(data.current.temperature_2m) || 24.5;
+            const precip = Number(data.current.precipitation) || 0.0;
+            setCurrentTemp(temp);
+            setTempHistory(prev => [...prev.slice(1), temp]);
+            setCurrentPrecip(precip);
+            setPrecipHistory(prev => [...prev.slice(1), { label: "12", value: precip }]);
+          }
+        })
+        .catch(console.error);
+    };
+    fetchWeather();
+    const interval = setInterval(fetchWeather, 30000);
     return () => clearInterval(interval);
   }, []);
 
@@ -145,24 +153,24 @@ export default function TopAnalytics() {
     <div className="top-analytics h-full flex gap-2 overflow-x-auto thin-scroll">
 
       {/* Precious Metals (Gold) */}
-      <div className="glass-panel p-2 flex flex-col flex-1 min-w-[230px] hover:border-yellow-500/40 transition-all cursor-pointer group">
+      <div className="glass-panel p-2 flex flex-col flex-1 min-w-[230px] hover:border-amber-500/40 transition-all cursor-pointer group">
         <div className="section-header flex justify-between items-center mb-1">
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-amber-400 shadow-[0_0_6px_#F59E0B]" />
-            <span className="text-[10px] font-bold text-amber-300 uppercase tracking-wider">Gold (COMEX Spot)</span>
+            <span className="w-2 h-2 rounded-full bg-amber-500 shadow-[0_0_6px_#F59E0B]" />
+            <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wider">Gold (COMEX Spot)</span>
           </div>
-          <span className="text-[8px] font-bold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">+2.4% MoM</span>
+          <span className="text-[8px] font-bold text-amber-600 dark:text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded border border-amber-500/20">+2.4% MoM</span>
         </div>
         <div className="flex justify-between items-baseline mb-1">
-          <span className="text-lg font-bold font-mono text-amber-300">${goldPrice.toFixed(2)}</span>
-          <span className="text-[9px] font-medium text-slate-400">USD / oz</span>
+          <span className="text-lg font-bold font-mono text-amber-600 dark:text-amber-300">${goldPrice.toFixed(2)}</span>
+          <span className="text-[9px] font-medium text-[var(--text-secondary)]">USD / oz</span>
         </div>
         <div className="flex-1 min-h-[40px]">
           <LineChart data={goldHistory} color="#F59E0B" />
         </div>
-        <div className="flex justify-between items-center mt-1 pt-1 border-t border-slate-800">
-          <span className="text-[8px] font-semibold text-slate-400 uppercase">Live Exchange Feed</span>
-          <span className="text-[8px] font-bold text-amber-400">Real-Time Market</span>
+        <div className="flex justify-between items-center mt-1 pt-1 border-t border-[var(--border-subtle)]">
+          <span className="text-[8px] font-semibold text-[var(--text-secondary)] uppercase">Live Exchange Feed</span>
+          <span className="text-[8px] font-bold text-amber-500">Real-Time Market</span>
         </div>
       </div>
 
@@ -170,21 +178,21 @@ export default function TopAnalytics() {
       <div className="glass-panel p-2 flex flex-col flex-1 min-w-[230px] hover:border-cyan-500/40 transition-all cursor-pointer group">
         <div className="section-header flex justify-between items-center mb-1">
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-cyan-400 shadow-[0_0_6px_#06B6D4]" />
-            <span className="text-[10px] font-bold text-cyan-300 uppercase tracking-wider">Crude Oil (WTI)</span>
+            <span className="w-2 h-2 rounded-full bg-cyan-500 shadow-[0_0_6px_#06B6D4]" />
+            <span className="text-[10px] font-bold text-cyan-600 dark:text-cyan-300 uppercase tracking-wider">Crude Oil (WTI)</span>
           </div>
-          <span className="text-[8px] font-bold text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20">+1.2% MoM</span>
+          <span className="text-[8px] font-bold text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 px-1.5 py-0.5 rounded border border-cyan-500/20">+1.2% MoM</span>
         </div>
         <div className="flex justify-between items-baseline mb-1">
-          <span className="text-lg font-bold font-mono text-cyan-300">${oilPrice.toFixed(2)}</span>
-          <span className="text-[9px] font-medium text-slate-400">USD / bbl</span>
+          <span className="text-lg font-bold font-mono text-cyan-600 dark:text-cyan-300">${oilPrice.toFixed(2)}</span>
+          <span className="text-[9px] font-medium text-[var(--text-secondary)]">USD / bbl</span>
         </div>
         <div className="flex-1 min-h-[40px]">
           <LineChart data={oilData} color="#00D4FF" />
         </div>
-        <div className="flex justify-between items-center mt-1 pt-1 border-t border-slate-800">
-          <span className="text-[8px] font-semibold text-slate-400 uppercase">NYMEX Spot Feed</span>
-          <span className="text-[8px] font-bold text-cyan-400">Real-Time Market</span>
+        <div className="flex justify-between items-center mt-1 pt-1 border-t border-[var(--border-subtle)]">
+          <span className="text-[8px] font-semibold text-[var(--text-secondary)] uppercase">NYMEX Spot Feed</span>
+          <span className="text-[8px] font-bold text-cyan-500">Real-Time Market</span>
         </div>
       </div>
 
@@ -192,21 +200,21 @@ export default function TopAnalytics() {
       <div className="glass-panel p-2 flex flex-col flex-1 min-w-[230px] hover:border-blue-500/40 transition-all cursor-pointer group">
         <div className="section-header flex justify-between items-center mb-1">
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse shadow-[0_0_6px_#3B82F6]" />
-            <span className="text-[10px] font-bold text-blue-300 uppercase tracking-wider">Precip Telemetry</span>
+            <span className="w-2 h-2 rounded-full bg-blue-500 animate-pulse shadow-[0_0_6px_#3B82F6]" />
+            <span className="text-[10px] font-bold text-blue-600 dark:text-blue-300 uppercase tracking-wider">Precip Telemetry</span>
           </div>
-          <span className="text-[8px] font-bold text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">LIVE RADAR</span>
+          <span className="text-[8px] font-bold text-blue-600 dark:text-blue-400 bg-blue-500/10 px-1.5 py-0.5 rounded border border-blue-500/20">LIVE RADAR</span>
         </div>
         <div className="flex justify-between items-baseline mb-1">
-          <span className="text-lg font-bold font-mono text-blue-300">{currentPrecip} <span className="text-xs text-slate-400">mm/h</span></span>
-          <span className="text-[9px] font-medium text-slate-400">Global Radar</span>
+          <span className="text-lg font-bold font-mono text-blue-600 dark:text-blue-300">{currentPrecip} <span className="text-xs text-[var(--text-secondary)]">mm/h</span></span>
+          <span className="text-[9px] font-medium text-[var(--text-secondary)]">Global Radar</span>
         </div>
         <div className="flex-1 min-h-[40px]">
           <BarChart data={precipHistory} color={(v) => v > 6 ? "#FF2244" : v > 3 ? "#FF8C00" : "#00D4FF"} />
         </div>
-        <div className="flex justify-between items-center mt-1 pt-1 border-t border-slate-800">
-          <span className="text-[8px] font-semibold text-slate-400 uppercase">Open-Meteo API</span>
-          <span className="text-[8px] font-bold text-blue-400">Atmospheric Feed</span>
+        <div className="flex justify-between items-center mt-1 pt-1 border-t border-[var(--border-subtle)]">
+          <span className="text-[8px] font-semibold text-[var(--text-secondary)] uppercase">Open-Meteo API</span>
+          <span className="text-[8px] font-bold text-blue-500">Atmospheric Feed</span>
         </div>
       </div>
 
@@ -214,21 +222,21 @@ export default function TopAnalytics() {
       <div className="glass-panel p-2 flex flex-col flex-1 min-w-[230px] hover:border-red-500/40 transition-all cursor-pointer group">
         <div className="section-header flex justify-between items-center mb-1">
           <div className="flex items-center gap-1.5">
-            <span className="w-2 h-2 rounded-full bg-red-400 animate-pulse shadow-[0_0_6px_#EF4444]" />
-            <span className="text-[10px] font-bold text-red-300 uppercase tracking-wider">Surface Temp</span>
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse shadow-[0_0_6px_#EF4444]" />
+            <span className="text-[10px] font-bold text-red-600 dark:text-red-300 uppercase tracking-wider">Surface Temp</span>
           </div>
-          <span className="text-[8px] font-bold text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20">NOAA ARRAY</span>
+          <span className="text-[8px] font-bold text-red-600 dark:text-red-400 bg-red-500/10 px-1.5 py-0.5 rounded border border-red-500/20">NOAA ARRAY</span>
         </div>
         <div className="flex justify-between items-baseline mb-1">
-          <span className="text-lg font-bold font-mono text-red-300">{currentTemp}°C</span>
-          <span className="text-[9px] font-medium text-slate-400">Thermal Mean</span>
+          <span className="text-lg font-bold font-mono text-red-600 dark:text-red-300">{currentTemp}°C</span>
+          <span className="text-[9px] font-medium text-[var(--text-secondary)]">Thermal Mean</span>
         </div>
         <div className="flex-1 min-h-[40px]">
           <LineChart data={tempHistory} color="#FF2244" />
         </div>
-        <div className="flex justify-between items-center mt-1 pt-1 border-t border-slate-800">
-          <span className="text-[8px] font-semibold text-slate-400 uppercase">Satellite Telemetry</span>
-          <span className="text-[8px] font-bold text-red-400">Live Thermal</span>
+        <div className="flex justify-between items-center mt-1 pt-1 border-t border-[var(--border-subtle)]">
+          <span className="text-[8px] font-semibold text-[var(--text-secondary)] uppercase">Satellite Telemetry</span>
+          <span className="text-[8px] font-bold text-red-500">Live Thermal</span>
         </div>
       </div>
 

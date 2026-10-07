@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import dynamic from "next/dynamic";
+import { useTheme } from "@/context/ThemeContext";
 
-// Dynamic imports for the main dashboard components
 const Header = dynamic(() => import("@/components/Header"), { ssr: false });
 const LeftSidebar = dynamic(() => import("@/components/LeftSidebar"), { ssr: false });
 const MapCenter = dynamic(() => import("@/components/MapCenter"), { ssr: false });
@@ -23,17 +23,15 @@ export default function Home() {
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState("");
   const [isLoading, setIsLoading] = useState(false);
-
-  // Layout resize state
-  const [leftWidth, setLeftWidth] = useState(280);
-  const [rightWidth, setRightWidth] = useState(280);
+  const [leftWidth] = useState(285);
+  const [rightWidth] = useState(285);
   const [isMapMaximized, setIsMapMaximized] = useState(false);
+  const { theme, toggleTheme } = useTheme();
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setErrorMsg("");
-
     setTimeout(() => {
       if (userId === "gov123" && password === "gov123") {
         setIsAuthenticated(true);
@@ -44,73 +42,164 @@ export default function Home() {
     }, 400);
   };
 
-  // Render Login Gateway Card if not authenticated
+  const fillDemoCredentials = () => {
+    setUserId("gov123");
+    setPassword("gov123");
+  };
+
+  const isDark = theme === "dark";
+
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen bg-[#0B0F19] text-white flex items-center justify-center p-4 relative overflow-hidden font-sans">
-        {/* Background Grid Accent */}
-        <div className="absolute inset-0 bg-[radial-gradient(#00D4FF_1px,transparent_1px)] [background-size:24px_24px] opacity-10 pointer-events-none" />
+      <div
+        className="min-h-screen flex items-center justify-center p-4 relative overflow-hidden transition-colors duration-300"
+        style={{ background: "var(--bg)", color: "var(--text)" }}
+      >
+        {/* Day / Dark mode toggle in top-right */}
+        <div className="absolute top-5 right-5 z-20">
+          <button
+            id="login-theme-toggle"
+            onClick={toggleTheme}
+            className="flex items-center gap-2 rounded-xl px-3.5 py-2 transition-all duration-200 hover:opacity-85 shadow-sm"
+            style={{
+              background: "var(--glass-bg)",
+              border: "1px solid var(--glass-border)",
+              color: "var(--text-secondary)",
+              backdropFilter: "blur(12px)",
+              cursor: "pointer",
+            }}
+            aria-label="Toggle Theme"
+          >
+            {isDark ? (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="5" />
+                <line x1="12" y1="1" x2="12" y2="3" />
+                <line x1="12" y1="21" x2="12" y2="23" />
+                <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+                <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+                <line x1="1" y1="12" x2="3" y2="12" />
+                <line x1="21" y1="12" x2="23" y2="12" />
+                <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+                <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
+              </svg>
+            ) : (
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--neon-blue)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" />
+              </svg>
+            )}
+            <span className="text-[10px] font-bold uppercase tracking-wider" style={{ color: "var(--text)" }}>
+              {isDark ? "Day Mode" : "Dark Mode"}
+            </span>
+          </button>
+        </div>
 
-        {/* Security Login Card */}
-        <div className="w-full max-w-md glass-panel p-8 rounded-xl border border-cyan-500/30 bg-[#0F1628]/95 shadow-[0_0_50px_rgba(0,0,0,0.8)] relative z-10">
-          
-          {/* Header Branding */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-cyan-500/10 border border-cyan-500/40 text-cyan-400 mb-3 shadow-[0_0_15px_rgba(0,212,255,0.2)]">
-              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+        {/* Ambient background patterns */}
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            backgroundImage: "radial-gradient(var(--neon-blue) 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+            opacity: 0.06,
+          }}
+        />
+        <div
+          className="absolute inset-0 pointer-events-none"
+          style={{
+            background: "radial-gradient(ellipse 60% 60% at 50% 40%, rgba(0,212,255,0.08) 0%, transparent 70%)",
+          }}
+        />
+
+        <div className="glass-panel w-full max-w-[430px] p-8 sm:p-9 rounded-2xl relative z-10 animate-fade-up">
+          <div className="text-center mb-7">
+            <div
+              className="inline-flex items-center justify-center w-14 h-14 rounded-2xl mb-3 shadow-md"
+              style={{ background: "rgba(0,212,255,0.1)", border: "1px solid rgba(0,212,255,0.35)", color: "var(--neon-blue)" }}
+            >
+              <svg className="w-7 h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2"
+                  d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"
+                />
               </svg>
             </div>
-            <h1 className="text-2xl font-bold tracking-wider text-white font-mono uppercase">
-              NEXUS<span className="text-cyan-400">INTEL</span>
+            <h1
+              className="text-[22px] font-extrabold tracking-[4px] uppercase mb-1"
+              style={{ color: "var(--text)" }}
+            >
+              NEXUS<span style={{ color: "var(--neon-blue)" }}>INTEL</span>
             </h1>
-            <p className="text-xs text-slate-400 tracking-widest uppercase mt-1">Government Security Gateway</p>
+            <p className="text-[10px] tracking-[3px] uppercase font-semibold" style={{ color: "var(--text-secondary)" }}>
+              Global Intelligence Command
+            </p>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleLogin} className="space-y-5">
+          <form onSubmit={handleLogin} className="space-y-4">
             {errorMsg && (
-              <div className="p-3 rounded-lg bg-red-500/10 border border-red-500/40 text-red-400 text-xs font-semibold text-center animate-shake">
+              <div
+                className="p-3 rounded-lg text-xs font-semibold text-center animate-fade-up"
+                style={{ background: "rgba(255,34,68,0.1)", border: "1px solid rgba(255,34,68,0.35)", color: "var(--neon-red)" }}
+              >
                 {errorMsg}
               </div>
             )}
-
             <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+              <label className="block text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: "var(--text-secondary)" }}>
                 Government Clearance ID
               </label>
               <input
+                id="login-userid"
                 type="text"
                 value={userId}
                 onChange={(e) => setUserId(e.target.value)}
-                placeholder="Enter User ID (e.g. gov123)"
-                className="w-full px-4 py-2.5 rounded-lg bg-black/40 border border-cyan-500/30 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all"
+                placeholder="e.g. gov123"
                 required
+                className="w-full px-4 py-2.5 rounded-lg text-sm transition-all outline-none"
+                style={{ background: "var(--input-bg)", border: "1px solid var(--input-border)", color: "var(--text)" }}
+                onFocus={(e) => (e.target.style.borderColor = "var(--neon-blue)")}
+                onBlur={(e) => (e.target.style.borderColor = "var(--input-border)")}
               />
             </div>
-
             <div>
-              <label className="block text-xs font-bold text-slate-300 uppercase tracking-wider mb-1.5">
+              <label className="block text-[10px] font-bold uppercase tracking-wider mb-2" style={{ color: "var(--text-secondary)" }}>
                 Security Passcode
               </label>
               <input
+                id="login-password"
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Enter Password"
-                className="w-full px-4 py-2.5 rounded-lg bg-black/40 border border-cyan-500/30 text-white placeholder-slate-500 text-sm focus:outline-none focus:border-cyan-400 focus:ring-1 focus:ring-cyan-400 transition-all"
                 required
+                className="w-full px-4 py-2.5 rounded-lg text-sm transition-all outline-none"
+                style={{ background: "var(--input-bg)", border: "1px solid var(--input-border)", color: "var(--text)" }}
+                onFocus={(e) => (e.target.style.borderColor = "var(--neon-blue)")}
+                onBlur={(e) => (e.target.style.borderColor = "var(--input-border)")}
               />
             </div>
 
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={fillDemoCredentials}
+                className="text-[10px] font-semibold text-neon-blue hover:underline tracking-wide cursor-pointer"
+              >
+                Auto-fill Demo Credentials (gov123)
+              </button>
+            </div>
+
             <button
+              id="login-submit-btn"
               type="submit"
               disabled={isLoading}
-              className="w-full py-3 px-4 rounded-lg bg-cyan-500 hover:bg-cyan-400 text-slate-950 font-bold text-xs uppercase tracking-widest transition-all shadow-[0_0_20px_rgba(0,212,255,0.3)] hover:shadow-[0_0_30px_rgba(0,212,255,0.5)] active:scale-[0.98] disabled:opacity-50 mt-2 flex items-center justify-center gap-2"
+              className="w-full py-3 px-4 rounded-xl text-xs font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 mt-2"
+              style={{
+                background: "var(--neon-blue)",
+                color: "#050C16",
+                boxShadow: "0 0 24px rgba(0,212,255,0.3)",
+                opacity: isLoading ? 0.7 : 1,
+                cursor: isLoading ? "not-allowed" : "pointer",
+              }}
             >
-              {isLoading ? (
-                <span>Authenticating Credentials...</span>
-              ) : (
+              {isLoading ? "Authenticating Clearance..." : (
                 <>
                   <span>Authenticate Clearance</span>
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -121,37 +210,36 @@ export default function Home() {
             </button>
           </form>
 
-          {/* Footer Notice */}
-          <div className="mt-8 pt-4 border-t border-slate-800 text-center">
-            <p className="text-[10px] text-slate-500 tracking-wider uppercase">
-              RESTRICTED ACCESS · AUTHORIZED PERSONNEL ONLY
-            </p>
+          <div
+            className="mt-7 pt-4 text-center text-[9px] uppercase tracking-[2px] font-semibold"
+            style={{ borderTop: "1px solid var(--border-subtle)", color: "var(--text-muted)" }}
+          >
+            RESTRICTED ACCESS · AUTHORIZED PERSONNEL ONLY
           </div>
         </div>
       </div>
     );
   }
 
-  // Render Full Command Dashboard when authenticated
   return (
-    <div className="flex flex-col h-screen bg-[#0B0F19] text-white font-sans overflow-hidden">
+    <div
+      className="flex flex-col h-screen overflow-hidden"
+      style={{ background: "var(--bg)", color: "var(--text)", transition: "background 0.3s ease, color 0.3s ease" }}
+    >
       <Header />
-      <div className="flex-1 overflow-hidden p-1.5 pt-0 flex relative w-full">
-        
-        {/* LEFT SIDEBAR */}
+      <div className="flex-1 overflow-hidden p-1.5 pt-1 flex relative w-full gap-1.5">
         <div style={{ width: leftWidth, minWidth: 200, maxWidth: 600 }} className="h-full shrink-0 flex flex-col relative z-[500]">
           <LeftSidebar />
         </div>
 
-        {/* MIDDLE SECTION (Map + Analytics + Domains) */}
-        <div className="flex-1 min-w-[400px] h-full flex flex-col relative py-0 overflow-y-auto thin-scroll scroll-smooth z-10 px-1">
+        <div className="flex-1 min-w-[400px] h-full flex flex-col relative overflow-y-auto thin-scroll scroll-smooth z-10">
           <div className="flex flex-col min-h-full">
             {!isMapMaximized && (
-              <div className="shrink-0 mb-2 h-auto min-h-[95px]">
+              <div className="shrink-0 mb-1.5 h-auto min-h-[95px]">
                 <TopAnalytics />
               </div>
             )}
-            <div className={`shrink-0 relative mb-2 transition-all duration-300 ${isMapMaximized ? "h-[calc(100vh-60px)]" : "h-[460px]"}`}>
+            <div className={`shrink-0 relative mb-1.5 transition-all duration-300 ${isMapMaximized ? "h-[calc(100vh-60px)]" : "h-[460px]"}`}>
               <MapCenter isMaximized={isMapMaximized} onToggleMaximize={() => setIsMapMaximized(!isMapMaximized)} />
             </div>
             {!isMapMaximized && (
@@ -159,10 +247,8 @@ export default function Home() {
                 <BottomAnalytics />
               </div>
             )}
-
-            {/* DOMAIN SECTIONS */}
             {!isMapMaximized && (
-              <div className="flex flex-col gap-6 p-1.5 pb-20">
+              <div className="flex flex-col gap-5 p-1 pb-24">
                 <TechSection />
                 <AgriSection />
                 <ClimateSection />
@@ -174,11 +260,9 @@ export default function Home() {
           </div>
         </div>
 
-        {/* RIGHT SIDEBAR */}
         <div style={{ width: rightWidth, minWidth: 200, maxWidth: 600 }} className="h-full shrink-0 flex flex-col relative z-[500]">
           <RightSidebar />
         </div>
-
       </div>
     </div>
   );

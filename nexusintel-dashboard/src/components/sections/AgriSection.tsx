@@ -16,51 +16,75 @@ const yieldData = [
 ];
 
 const riskData = [
-  { name: 'Low Risk', value: 45, color: '#00FF88' },
-  { name: 'Monitor', value: 30, color: '#FFD700' },
-  { name: 'Extreme', value: 25, color: '#FF2244' },
+  { name: 'Low Risk', value: 45, color: '#00FF88', label: '45%' },
+  { name: 'Monitor', value: 30, color: '#FFD700', label: '30%' },
+  { name: 'Extreme', value: 25, color: '#FF2244', label: '25%' },
 ];
 
 export default function AgriSection() {
   return (
     <div id="agri-intel" className="glass-panel p-4 min-h-[350px]">
-      <SectionHeader 
-        title="Agriculture & Food Security" 
-        subtitle="Crop Yield Forecasts & Market Stability"
-        href="/agriculture-intelligence"
-        color="#00FF88"
-      />
+      <div className="flex items-center justify-between mb-1">
+        <SectionHeader 
+          title="Agriculture & Food Security" 
+          subtitle="Crop Yield Forecasts & Market Stability"
+          href="/agriculture-intelligence"
+          color="var(--neon-green)"
+        />
+        <div className="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded bg-[var(--card-bg)] border border-[var(--border-subtle)] text-[8.5px] font-mono text-[var(--text-secondary)]">
+          <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse" />
+          <span>FAO & USDA GLOBAL TELEMETRY · LIVE</span>
+        </div>
+      </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-4">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-4">
         {/* Crop Yield Forecast */}
-        <div className="flex flex-col">
+        <div className="flex flex-col bg-[var(--card-bg)] rounded-xl border border-[var(--border-subtle)] p-3.5">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Global Wheat Price Index</span>
-            <span className="text-[10px] text-neon-red font-bold">+18.4% (Volatility High)</span>
+            <div>
+              <span className="text-[11px] font-bold text-[var(--text)] uppercase tracking-wider block">Global Wheat Price Index</span>
+              <span className="text-[8.5px] text-[var(--text-secondary)]">Benchmark commodities against historic 100 pt baseline</span>
+            </div>
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-red-500/10 text-neon-red border border-red-500/20">
+              -15% (Supply Crunch)
+            </span>
           </div>
-          <div className="h-48 w-full bg-black/20 rounded border border-white/5 p-2 pt-4">
+
+          <div className="h-52 w-full pt-2">
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={yieldData}>
+              <AreaChart data={yieldData} margin={{ top: 15, right: 15, left: -10, bottom: 0 }}>
                 <defs>
                   <linearGradient id="colorYield" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#00FF88" stopOpacity={0.3}/>
+                    <stop offset="5%" stopColor="#00FF88" stopOpacity={0.35}/>
                     <stop offset="95%" stopColor="#00FF88" stopOpacity={0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.05)" vertical={false} />
+                <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.06)" vertical={false} />
                 <XAxis 
                   dataKey="month" 
-                  axisLine={false} 
+                  axisLine={{ stroke: 'rgba(255,255,255,0.1)' }} 
                   tickLine={false} 
-                  tick={{ fontSize: 9, fill: '#64748B' }} 
+                  tick={{ fontSize: 10, fill: 'var(--text-secondary)', fontWeight: 600 }} 
                 />
                 <YAxis 
+                  domain={[75, 105]}
                   axisLine={false} 
                   tickLine={false} 
-                  tick={{ fontSize: 9, fill: '#64748B' }} 
+                  tick={{ fontSize: 9, fill: 'var(--text-secondary)' }} 
                 />
                 <Tooltip 
-                  contentStyle={{ background: '#0F172A', border: '1px solid rgba(0, 255, 136, 0.3)', borderRadius: '4px', fontSize: '10px' }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="p-2.5 rounded bg-[#0B0F19] border border-emerald-500/30 shadow-xl text-xs">
+                          <p className="font-bold text-white mb-0.5">{data.month} Index Score</p>
+                          <p className="font-mono text-neon-green font-bold text-sm">{data.value} Pts</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
                 />
                 <Area 
                   type="monotone" 
@@ -68,19 +92,42 @@ export default function AgriSection() {
                   stroke="#00FF88" 
                   fillOpacity={1} 
                   fill="url(#colorYield)" 
-                  strokeWidth={2}
+                  strokeWidth={2.5}
+                  dot={{ r: 4, fill: '#00FF88', stroke: '#FFFFFF', strokeWidth: 1.5 }}
                 />
               </AreaChart>
             </ResponsiveContainer>
           </div>
+
+          <div className="mt-3 pt-2.5 border-t border-[var(--border-subtle)] grid grid-cols-3 gap-2 text-center">
+            <div className="bg-[var(--surface-2)] rounded p-1.5">
+              <span className="text-[7.5px] uppercase tracking-wider text-[var(--text-muted)] block">Peak Index (Jan)</span>
+              <span className="text-[11px] font-mono font-bold text-[var(--text)]">100.0</span>
+            </div>
+            <div className="bg-[var(--surface-2)] rounded p-1.5">
+              <span className="text-[7.5px] uppercase tracking-wider text-[var(--text-muted)] block">Current Low (Jun)</span>
+              <span className="text-[11px] font-mono font-bold text-neon-red">85.0</span>
+            </div>
+            <div className="bg-[var(--surface-2)] rounded p-1.5">
+              <span className="text-[7.5px] uppercase tracking-wider text-[var(--text-muted)] block">Volatility Grade</span>
+              <span className="text-[11px] font-mono font-bold text-neon-orange">Elevated</span>
+            </div>
+          </div>
         </div>
 
-        {/* Global Drought Risk Pie */}
-        <div className="flex flex-col">
+        {/* Global Drought Risk Pie with Visible Legend Breakdown */}
+        <div className="flex flex-col bg-[var(--card-bg)] rounded-xl border border-[var(--border-subtle)] p-3.5">
           <div className="flex items-center justify-between mb-2">
-            <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Global Arable Land Risk Profile</span>
+            <div>
+              <span className="text-[11px] font-bold text-[var(--text)] uppercase tracking-wider block">Global Arable Land Risk Profile</span>
+              <span className="text-[8.5px] text-[var(--text-secondary)]">Satellite soil moisture and drought vulnerability indices</span>
+            </div>
+            <span className="text-[10px] font-mono font-bold px-2 py-0.5 rounded bg-amber-500/10 text-neon-amber border border-amber-500/20">
+              55% AT RISK
+            </span>
           </div>
-          <div className="h-48 w-full bg-black/20 rounded border border-white/5 flex items-center justify-center p-2">
+
+          <div className="h-52 w-full flex items-center justify-center relative pt-1">
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -88,46 +135,67 @@ export default function AgriSection() {
                   cx="50%"
                   cy="50%"
                   innerRadius={50}
-                  outerRadius={70}
+                  outerRadius={75}
                   paddingAngle={5}
                   dataKey="value"
                 >
                   {riskData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
+                    <Cell key={`cell-${index}`} fill={entry.color} stroke="none" />
                   ))}
                 </Pie>
                 <Tooltip 
-                  contentStyle={{ background: '#0F172A', border: '1px solid rgba(0, 255, 136, 0.3)', borderRadius: '4px', fontSize: '10px' }}
+                  content={({ active, payload }) => {
+                    if (active && payload && payload.length) {
+                      const data = payload[0].payload;
+                      return (
+                        <div className="p-2.5 rounded bg-[#0B0F19] border border-cyan-500/30 shadow-xl text-xs">
+                          <p className="font-bold text-white mb-0.5">{data.name}</p>
+                          <p className="font-mono text-neon-blue font-bold text-sm">{data.value}% of Global Arable Land</p>
+                        </div>
+                      );
+                    }
+                    return null;
+                  }}
                 />
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-[10px] font-orbitron font-bold text-white">25%</span>
-              <span className="text-[7px] text-neon-red font-bold uppercase tracking-tighter">Extreme Risk</span>
+              <span className="text-sm font-bold font-mono text-[var(--text)]">25%</span>
+              <span className="text-[7.5px] text-neon-red font-bold uppercase tracking-tight">Extreme</span>
             </div>
+          </div>
+
+          {/* Visible Legend / Breakdown */}
+          <div className="mt-3 pt-2.5 border-t border-[var(--border-subtle)] grid grid-cols-3 gap-2 text-center">
+            {riskData.map(r => (
+              <div key={r.name} className="bg-[var(--surface-2)] rounded p-1.5 flex flex-col items-center">
+                <div className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full" style={{ background: r.color }} />
+                  <span className="text-[7.5px] uppercase font-bold text-[var(--text-muted)]">{r.name}</span>
+                </div>
+                <span className="text-[11px] font-mono font-bold mt-0.5" style={{ color: r.color }}>{r.value}%</span>
+              </div>
+            ))}
           </div>
         </div>
       </div>
 
       {/* Agri Supply Chain Stats */}
-      <div className="mt-6">
-        <div className="flex items-center gap-2 mb-3">
-          <div className="w-1.5 h-1.5 rounded-full bg-neon-green" />
-          <span className="text-[9px] font-bold text-white uppercase tracking-[2px]">Market Disruption Alerts</span>
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {[
-            { label: 'Fertilizer Cost', val: '+24%', status: 'Critical' },
-            { label: 'Logistics Delay', val: '8.2 Days', status: 'Warning' },
-            { label: 'Soil Health', val: '64%', status: 'Stable' },
-            { label: 'Export Bans', val: '12 Nations', status: 'Risk' }
-          ].map(stat => (
-            <div key={stat.label} className="p-2 rounded bg-white/5 border border-white/5">
-              <span className="text-[8px] text-text-muted font-bold block">{stat.label}</span>
-              <span className="text-[11px] font-orbitron font-bold text-white block mt-0.5">{stat.val}</span>
-            </div>
-          ))}
-        </div>
+      <div className="mt-5 grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {[
+          { label: 'Fertilizer Cost', val: '+24% YoY', status: 'Critical Surge', color: 'red' },
+          { label: 'Logistics Delay', val: '8.2 Days', status: 'Port Bottleneck', color: 'orange' },
+          { label: 'Soil Hydration', val: '64% Optimal', status: 'Stable Mean', color: 'green' },
+          { label: 'Export Restrictions', val: '12 Nations', status: 'Active Bans', color: 'orange' }
+        ].map(stat => (
+          <div key={stat.label} className="p-3 rounded-xl bg-[var(--card-bg)] border border-[var(--border-subtle)] flex flex-col justify-between shadow-sm">
+            <span className="text-[8.5px] text-[var(--text-muted)] font-bold uppercase tracking-wider">{stat.label}</span>
+            <span className="text-base font-bold font-mono text-[var(--text)] mt-1">{stat.val}</span>
+            <span className={`text-[8px] font-bold mt-1 ${stat.color === 'red' ? 'text-neon-red' : (stat.color === 'orange' ? 'text-neon-orange' : 'text-neon-green')}`}>
+              {stat.status}
+            </span>
+          </div>
+        ))}
       </div>
     </div>
   );

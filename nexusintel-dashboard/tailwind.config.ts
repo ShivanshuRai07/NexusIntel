@@ -1,6 +1,7 @@
-import type { Config } from "tailwindcss";
+﻿import type { Config } from "tailwindcss";
 
 const config: Config = {
+  darkMode: ["selector", '[data-theme="dark"]'],
   content: [
     "./src/pages/**/*.{js,ts,jsx,tsx,mdx}",
     "./src/components/**/*.{js,ts,jsx,tsx,mdx}",
@@ -9,7 +10,7 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        background: "#0B0F19",
+        background: "#080C16",
         panel: "#0F1628",
         "panel-border": "#1a2a4a",
         "neon-blue": "#00D4FF",
@@ -26,17 +27,19 @@ const config: Config = {
       fontFamily: {
         orbitron: ["Orbitron", "sans-serif"],
         inter: ["Inter", "sans-serif"],
+        mono: ["JetBrains Mono", "monospace"],
       },
       animation: {
         pulse: "pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite",
-        blink: "blink 1s step-start infinite",
+        blink: "blink 1.2s ease-in-out infinite",
         scroll: "scroll 30s linear infinite",
         "glow-pulse": "glowPulse 2s ease-in-out infinite",
         "spin-slow": "spin 8s linear infinite",
-        "float": "float 6s ease-in-out infinite",
+        float: "float 6s ease-in-out infinite",
+        "fade-up": "fadeInUp 0.4s ease both",
       },
       keyframes: {
-        blink: { "0%, 100%": { opacity: "1" }, "50%": { opacity: "0" } },
+        blink: { "0%, 100%": { opacity: "1" }, "50%": { opacity: "0.15" } },
         scroll: { "0%": { transform: "translateX(0)" }, "100%": { transform: "translateX(-50%)" } },
         glowPulse: {
           "0%, 100%": { boxShadow: "0 0 5px #00D4FF, 0 0 10px #00D4FF" },
@@ -46,13 +49,17 @@ const config: Config = {
           "0%, 100%": { transform: "translateY(0px)" },
           "50%": { transform: "translateY(-10px)" },
         },
+        fadeInUp: {
+          from: { opacity: "0", transform: "translateY(12px)" },
+          to: { opacity: "1", transform: "translateY(0)" },
+        },
       },
       backdropBlur: { xs: "2px" },
       boxShadow: {
         "neon-blue": "0 0 10px rgba(0, 212, 255, 0.5), 0 0 20px rgba(0, 212, 255, 0.3)",
         "neon-red": "0 0 10px rgba(255, 34, 68, 0.5), 0 0 20px rgba(255, 34, 68, 0.3)",
         "neon-green": "0 0 10px rgba(0, 255, 136, 0.5), 0 0 20px rgba(0, 255, 136, 0.3)",
-        "panel": "0 4px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(0, 212, 255, 0.1)",
+        panel: "0 4px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(0, 212, 255, 0.1)",
       },
     },
   },
